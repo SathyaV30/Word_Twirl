@@ -4,8 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { playButtonSound } from '../AudioHelper';
 import SoundContext from '../SoundContext';
+import GradientContext from '../GradientContext';
+import { scaledSize } from '../ScalingUtility';
+
+//Rules modal
 export default function Rules({modalVisible, setModalVisible}) {
-  const {isSoundMuted} = useContext(SoundContext)
+  const {isSoundMuted} = useContext(SoundContext);
+  const {gradientColors}= useContext(GradientContext);
+  
   return (
     <Modal
       animationType="slide"
@@ -15,7 +21,7 @@ export default function Rules({modalVisible, setModalVisible}) {
         setModalVisible(!modalVisible);
       }}
     >
-      <LinearGradient colors={['#2E3192', '#1BFFFF']} style={styles.modalContainer}>
+      <LinearGradient colors={gradientColors} style={styles.modalContainer}>
 
         <Text style={styles.rulesTitleText}>Here are the rules:</Text>
         
@@ -28,6 +34,7 @@ export default function Rules({modalVisible, setModalVisible}) {
           • If a word appears in <Text style={{ color: '#EED292' }}>yellow</Text>, it has been found before.
         </Text>
         <Text style={styles.rulesModalText}>• Longer words are awarded more points.</Text>
+  
   
         
         <TouchableOpacity onPress={() => {setModalVisible(false); playButtonSound(isSoundMuted)} } style={styles.closeButton}>
@@ -45,35 +52,35 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontFamily: 'ComicSerifPro',
-    fontSize: (24),
+    fontSize: scaledSize(24),
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: scaledSize(20)
   },
   rulesModalText: {
     fontFamily: 'ComicSerifPro',
-    fontSize: (22),
+    fontSize: scaledSize(22),
     color: '#fff',
     textAlign:'center',
-    marginBottom: 20
+    marginBottom: scaledSize(20)
   },
   rulesTitleText: {
     fontFamily: 'ComicSerifPro',
     color: '#fff',
-    fontSize: (40),
-    marginBottom:20,
+    fontSize: scaledSize(40),
+    marginBottom: scaledSize(20),
   },
   closeButton: {
-    marginTop: 20,
-    padding: (12),
-    borderRadius: (15),
+    marginTop: scaledSize(20),
+    padding: scaledSize(12),
+    borderRadius: scaledSize(15),
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
+    borderWidth: scaledSize(1),
   },
   closeButtonText: {
     fontFamily: 'ComicSerifPro',
     color: '#fff',
-    fontSize: (20),
+    fontSize: scaledSize(20),
   },
 })

@@ -31,10 +31,22 @@ const soundFiles = [
     require('./assets/sounds/cells/22.wav'),
     require('./assets/sounds/cells/23.wav'),
     require('./assets/sounds/cells/24.wav'),
-    require('./assets/sounds/cells/25.wav')
+    require('./assets/sounds/cells/25.wav'),
+    require('./assets/sounds/cells/26.wav'),
+    require('./assets/sounds/cells/27.wav'),
+    require('./assets/sounds/cells/28.wav'),
+    require('./assets/sounds/cells/29.wav'),
+    require('./assets/sounds/cells/30.wav'),
+    require('./assets/sounds/cells/31.wav'),
+    require('./assets/sounds/cells/32.wav'),
+    require('./assets/sounds/cells/33.wav'),
+    require('./assets/sounds/cells/34.wav'),
+    require('./assets/sounds/cells/35.wav'),
+    require('./assets/sounds/cells/36.wav')
   ];
   
-  export async function loadBGM() {
+//Helper functions for load/play/stop audio.
+export async function loadBGM() {
     if (!bgm) {
         const soundObject = new Audio.Sound();
         try {
@@ -59,7 +71,7 @@ export async function loadButtonSound() {
 }
 
 export async function loadCellSounds() {
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 36; i++) {
         const soundObject = new Audio.Sound();
         try {
             await soundObject.loadAsync(soundFiles[i]);

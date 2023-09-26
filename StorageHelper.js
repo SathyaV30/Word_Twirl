@@ -5,9 +5,31 @@ export const TOTAL_SCORE_KEY_PREFIX = 'totalScore_';
 export const ALL_WORDS_USER_FOUND_KEY = 'allWordsUserFound';
 export const HIGH_SCORE_KEY_PREFIX = 'highScore_';
 export const GAMES_PLAYED_KEY_PREFIX = 'gamesPlayed_';  
+export const SELECTED_GRADIENT_KEY = 'selectedGradient';
+export const UNLOCKED_MAPS_KEY = 'unlockedMaps';
 
 
-// Helper functions
+export const getUnlockedMaps = async () => {
+    const unlockedMaps = await AsyncStorage.getItem(UNLOCKED_MAPS_KEY);
+    return unlockedMaps ? JSON.parse(unlockedMaps) : [];
+};
+
+export const unlockMap = async (mapId) => {
+    const unlockedMaps = await getUnlockedMaps();
+    if (!unlockedMaps.includes(mapId)) {
+        unlockedMaps.push(mapId);
+        await AsyncStorage.setItem(UNLOCKED_MAPS_KEY, JSON.stringify(unlockedMaps));
+    }
+};
+
+export const setSelectedGradient = async (gradient) => {
+    await AsyncStorage.setItem(SELECTED_GRADIENT_KEY, JSON.stringify(gradient));
+};
+
+export const getSelectedGradient = async () => {
+    const gradient = await AsyncStorage.getItem(SELECTED_GRADIENT_KEY);
+    return gradient ? JSON.parse(gradient) : null;
+};
 
 export const getTotalScoreForTime = async (time) => {
     const totalScore = await AsyncStorage.getItem(TOTAL_SCORE_KEY_PREFIX + time);

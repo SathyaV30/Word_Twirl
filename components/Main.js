@@ -16,90 +16,82 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { playButtonSound } from '../AudioHelper';
 import { FontAwesome } from '@expo/vector-icons';
 import SoundContext from '../SoundContext';
+import GradientContext from "../GradientContext";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
-
-
-
+import { scaledSize } from "../ScalingUtility";
 const { width, height } = Dimensions.get("window");
 
+const adUnitIdBanner = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyyyyyy';
+//Main menu screen
 export default function Main({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const { isSoundMuted, setIsSoundMuted, isMusicMuted, setIsMusicMuted } = useContext(SoundContext);
+  const {gradientColors} = useContext(GradientContext)
   
 
 
-
-  const generateRandomLetter = () => {
-    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    return charset.charAt(Math.floor(Math.random() * charset.length));
-  };
-
   const numberOfRows = 12;
-  const lettersPerRow = 50;
-  const letters = new Array(numberOfRows)
-    .fill([])
-    .map(() =>
-      new Array(lettersPerRow).fill("").map(() => generateRandomLetter()),
-    );
+  const text = "Word Twirl";
+  const lettersPerRow = text.length;
+  const rows = new Array(numberOfRows).fill(text.split(''));
 
   const animationRefs = useRef(
     new Array(numberOfRows)
       .fill()
       .map((_, idx) => ({
-        animValue: new Animated.Value(0),
-        direction: idx % 2 === 0 ? 1 : -1,
+        animValue: new Animated.Value(idx % 2 === 0 ? width : -width), // Odd rows start on the right, even rows on the left
+        offset: idx % lettersPerRow,
       })),
   ).current;
-
+  
   useEffect(() => {
     animationRefs.forEach((ref, index) => {
-      const speed = 5000; // 10 second
-
+      const speed = 10000;
+      const isEvenRow = index % 2 === 0;
+  
       Animated.loop(
         Animated.sequence([
           Animated.timing(ref.animValue, {
-            toValue: ref.direction,
+            toValue: isEvenRow ? -width : width,  
             duration: speed,
             useNativeDriver: true,
           }),
-          Animated.timing(ref.animValue, {
-            toValue: 0,
-            duration: speed,
+          Animated.timing(ref.animValue, { 
+            toValue: isEvenRow ? width : -width, 
+            duration: 0,
             useNativeDriver: true,
           }),
         ]),
       ).start();
     });
   }, []);
-
+  
   return (
-    <LinearGradient colors={["#2E3192", "#1BFFFF"]} style={styles.container}>
-      {letters.map((row, rowIndex) => (
-        <Animated.View
-          key={rowIndex}
-          style={[
-            styles.letterRow,
-            {
-              transform: [
-                {
-                  translateX: animationRefs[rowIndex]?.animValue?.interpolate({
-                    inputRange: [-1, 1],
-                    outputRange: [-height / 2, height / 2],
-                  }),
-                },
-              ],
-              zIndex: 0, // Ensure rows are behind the title and buttons
-            },
-          ]}
-        >
-          {row.map((letter, letterIndex) => (
-            <Text key={letterIndex} style={styles.letter}>
-              {letter}
-            </Text>
-          ))}
-        </Animated.View>
-      ))}
+    <LinearGradient colors={gradientColors} style={styles.container}>
 
+      {/* TBD whether to use, slows performace due to many rerenders*/}
+      {/* {rows.map((row, rowIndex) => (
+  <Animated.View
+    key={rowIndex}
+    style={[
+      styles.letterRow,
+      {
+        transform: [
+          {
+            translateX: animationRefs[rowIndex]?.animValue,
+          },
+        ],
+        zIndex: 0, // Ensure rows are behind the title and buttons
+      },
+    ]}
+  >
+    {row.map((letter, letterIndex) => (
+      <Text key={letterIndex} style={styles.letter}>
+        {letter}
+      </Text>
+    ))}
+  </Animated.View>
+))} */}
       <View style={[styles.overlayContainer, { zIndex: 1 }]}>
         <Text style={styles.titleText}>Word Twirl</Text>
 
@@ -130,29 +122,39 @@ export default function Main({ navigation }) {
               <Text style={styles.buttonText}>Stats</Text>
             </BlurView>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>{navigation.navigate("StylesScreen"); playButtonSound(isSoundMuted)}}
+          >
+            <BlurView intensity={50} tint="light" style={styles.glassButton}>
+              <Text style={styles.buttonText}>Styles</Text>
+            </BlurView>
+          </TouchableOpacity>
          
   
           <View style={styles.iconsContainer}>
         <TouchableOpacity style={styles.iconButtonContainer} onPress={() => {
             setIsSoundMuted(!isSoundMuted);
-            playButtonSound(isSoundMuted); // play sound if you want feedback on mute toggle
+            playButtonSound(isSoundMuted); 
         }}>
             <BlurView intensity={50} tint="light" style={[styles.glassButton, styles.iconGlassButton]}>
-                <FontAwesome name={isSoundMuted ? 'volume-off' : 'volume-up'} size={50} color="#fff" />
+                <FontAwesome name={isSoundMuted ? 'volume-off' : 'volume-up'} size={scaledSize(38)}color={isSoundMuted ? 'gray' : '#fff'} />
             </BlurView>
         </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconButtonContainer} onPress={() => {
             setIsMusicMuted(!isMusicMuted);
-            playButtonSound(isSoundMuted); // play sound if you want feedback on mute toggle
+            playButtonSound(isSoundMuted); 
         }}>
-            <BlurView intensity={40} tint="light" style={[styles.glassButton, styles.iconGlassButton]}>
-                <FontAwesome name={isMusicMuted ? 'music' : 'music'} size={50} color={isMusicMuted ? 'gray' : '#fff'} />
+            <BlurView intensity={50} tint="light" style={[styles.glassButton, styles.iconGlassButton]}>
+                <FontAwesome name={isMusicMuted ? 'music' : 'music'} size={scaledSize(38)} color={isMusicMuted ? 'gray' : '#fff'} />
             </BlurView>
         </TouchableOpacity>
     </View>
 
         </View>
-        <View style ={{marginBottom:35}}>
+        <View style ={{marginBottom:scaledSize(30)}}>
         <BannerAd 
         unitId={TestIds.BANNER}
         size={BannerAdSize.LARGE_BANNER}
@@ -175,7 +177,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    padding: scaledSize(16),
   },
   overlayContainer: {
     position: "absolute",
@@ -188,23 +190,22 @@ export const styles = StyleSheet.create({
   },
   letterRow: {
     flexDirection: "row",
-    height: height / 10,
+    height: scaledSize(height / 10),
     alignItems: "center",
   },
   letter: {
-    fontSize: 50,
+    fontSize: scaledSize(60),
     color: "rgba(255,255,255,0.25)",
     opacity: 0.5,
-    marginHorizontal: 10,
     fontFamily: "ComicSerifPro",
   },
   titleText: {
     fontFamily: "ComicSerifPro",
-    fontSize: 65,
-    marginTop: 100,
+    fontSize: scaledSize(65),
+    marginTop: scaledSize(100),
     color: "#fff",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: scaledSize(2), height: scaledSize(2) },
+    textShadowRadius: scaledSize(3),
     textShadowColor: "#333",
     textAlign: "center",
   },
@@ -216,49 +217,50 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   button: {
-    height: 100,
-    borderRadius: 15,
+    height: scaledSize(80),
+    borderRadius: scaledSize(15),
     minWidth: "100%",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 25,
+    marginBottom: scaledSize(25),
   },
   glassButton: {
-    padding: 24,
-    borderRadius: 15,
-    minWidth: "90%",
+    height: '100%',
+    borderRadius: scaledSize(15),
+    minWidth: "84.2%",
     borderColor: "rgba(255, 255, 255, 0.1)",
-    borderWidth: 1,
+    borderWidth: scaledSize(1),
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: {
     fontFamily: "ComicSerifPro",
     color: "#fff",
-    fontSize: 40,
+    fontSize: scaledSize(40),
   },
   iconsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minWidth: '90%',
-    marginBottom: 25,
+    minWidth: '84.2%', 
+    marginBottom: scaledSize(25),
   },
   iconButtonContainer: {
     flex: 1,
-    height: 100,
+    height: scaledSize(80),
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal:12.5
+    marginHorizontal: 0,  
   },
   iconGlassButton: {
     width: '100%', 
     height: '100%',
-    padding: 24,
-    borderRadius: 15,
+    padding: scaledSize(18),
+    borderRadius: scaledSize(15),
     alignItems: 'center',
     justifyContent: 'center',
   },
 });
+
 
 

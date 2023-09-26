@@ -14,18 +14,24 @@ import Stats from './components/Stats';
 import { loadCellSounds, loadButtonSound, loadCISounds, loadBGM } from './AudioHelper';
 import { SoundProvider } from './SoundContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import StylesScreen from './components/StylesScreen';
+import GradientContext from './GradientContext';
+import { getSelectedGradient, setSelectedGradient} from './StorageHelper';
 
 const Stack = createStackNavigator();
 
 
-
+//Initiailize app and stack screens
 export default function App() {
   const [isSoundMuted, setIsSoundMuted] = useState(false);
   const [isMusicMuted, setIsMusicMuted] = useState(false);
+  const [gradientColors, setGradientColors] = useState(null);
 
-  useEffect(() => {
-    loadSoundSettings();
-  }, []);
+  const setAppGradient = async (newGradient) => {
+    await setSelectedGradient(newGradient);
+    setGradientColors(newGradient);
+  };
+
 
   const loadSoundSettings = async () => {
     try {
@@ -48,7 +54,7 @@ export default function App() {
     }
   };
 
-  // Save to local storage whenever the state changes
+  
   useEffect(() => {
     saveSoundSettings();
   }, [isSoundMuted, isMusicMuted]);
@@ -57,12 +63,27 @@ export default function App() {
     'ComicSerifPro': require('./assets/fonts/HVD_Comic_Serif_Pro.otf'),
   });
 
-  useEffect(() => {
-    loadButtonSound();
-    loadCellSounds();
-    loadCISounds();
-    loadBGM();
+ useEffect(() => {
+    async function initializeData() {
+ 
+        loadSoundSettings();
+        loadButtonSound();
+        loadCellSounds();
+        loadCISounds();
+        loadBGM();
+
+       
+        const chosenGradient = await getSelectedGradient();
+        if (chosenGradient) {
+            setGradientColors(chosenGradient);
+        } else {
+            setGradientColors(["#000000", "#000000"]); 
+        }
+    }
+    
+    initializeData();
 }, []);
+
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded || fontError) {
@@ -70,11 +91,13 @@ export default function App() {
     }
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded && !fontError || !gradientColors) {
     return null;
   }
 
-  return ( <SoundProvider value={{ isSoundMuted, setIsSoundMuted, isMusicMuted, setIsMusicMuted }}>
+  return ( 
+    <GradientContext.Provider value={{gradientColors, setAppGradient}}>
+  <SoundProvider value={{ isSoundMuted, setIsSoundMuted, isMusicMuted, setIsMusicMuted }}>
 
     
     <NavigationContainer onLayout={onLayoutRootView}>
@@ -162,6 +185,15 @@ export default function App() {
     },
     title:'',
   }} />
+
+ <Stack.Screen name="StylesScreen" component={StylesScreen} 
+ options={{
+  headerBackTitle:'Back',
+  headerBackTitleStyle: {
+    fontFamily: 'ComicSerifPro',
+  },
+  title:'',
+}} />
   
 
 
@@ -170,17 +202,8 @@ export default function App() {
     
   </NavigationContainer>
   </SoundProvider>
+  </GradientContext.Provider>
   );
 
 }
 
- const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  font: {
-    fontFamily:'ComicSerifPro',
-  }
-});

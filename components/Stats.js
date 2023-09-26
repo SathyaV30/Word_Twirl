@@ -1,16 +1,20 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useContext} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatForKey, getAllWordsUserFound, GAMES_PLAYED_KEY_PREFIX, HIGH_SCORE_KEY_PREFIX, TOTAL_SCORE_KEY_PREFIX } from '../StorageHelper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import GradientContext from '../GradientContext';
+import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
+import { scaledSize } from '../ScalingUtility';
+import { adUnitIdBanner } from '../AdHelper';
 
-
+//Stats screen
 const Stats = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState('All');
     const [stats, setStats] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
-
+    const {gradientColors}= useContext(GradientContext);
     useEffect(() => {
         const fetchStats = async () => {
             const timeLimits = ['1 min', '3 min', '5 min'];
@@ -48,7 +52,7 @@ const Stats = ({ navigation }) => {
     }, []);
 
     return (
-        <LinearGradient colors={['#2E3192', '#1BFFFF']} style={styles.container}>
+        <LinearGradient colors={gradientColors} style={styles.container}>
             <SafeAreaView style={styles.safeAreaContainer}>
                 <View style={styles.tabs}>
                     {['All', '1 min', '3 min', '5 min', 'Words Found'].map(tab => (
@@ -62,19 +66,19 @@ const Stats = ({ navigation }) => {
     .map(([time, data]) => (
         <View key={time} style={styles.statContainer}>
             <View style={styles.statItem}>
-                <FontAwesome name="gamepad" size={24} color="white" style={styles.statIcon} />
+                <FontAwesome name="gamepad" size={scaledSize(24)} color="white" style={styles.statIcon} />
                 <Text style={styles.statText}>Games Played: {data.gamesPlayed}</Text>
             </View>
             <View style={styles.statItem}>
-                <FontAwesome name="trophy" size={24} color="white" style={styles.statIcon} />
+                <FontAwesome name="trophy" size={scaledSize(24)} color="white" style={styles.statIcon} />
                 <Text style={styles.statText}>High Score: {data.highScore}</Text>
             </View>
             <View style={styles.statItem}>
-                <FontAwesome name="star" size={24} color="white" style={styles.statIcon} />
+                <FontAwesome name="star" size={scaledSize(24)} color="white" style={styles.statIcon} />
                 <Text style={styles.statText}>Total Score: {data.totalScore}</Text>
             </View>
             <View style={styles.statItem}>
-                <FontAwesome name="calculator" size={24} color="white" style={styles.statIcon} />
+                <FontAwesome name="calculator" size={scaledSize(24)} color="white" style={styles.statIcon} />
                 <Text style={styles.statText}>Average Score: {data.averageScore}</Text>
             </View>
         </View>
@@ -93,40 +97,50 @@ const Stats = ({ navigation }) => {
                         <Text style ={styles.wordsFoundText}>{stats['Words Found'] ? stats['Words Found']?.wordsFound.length : 0} Words Found</Text>
                         <ScrollView style={styles.wordList}>
                             {Array.from(stats['Words Found']?.wordsFound || []).filter(word => word.toLowerCase().includes(searchTerm.toLowerCase())).map((word, index) => (
-                                <TouchableOpacity key={index} style={styles.wordContainer} onPress={() => navigation.navigate('WordDetailsScreen', { word })} >
+                                <TouchableOpacity key={index} style={styles.wordContainer} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters:null, wordsToPath:null, fromGame:false })} >
                                     <Text style={styles.word}>{word.toLowerCase()}</Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
                     </View>
                 )}
+            
             </SafeAreaView>
+            <View style ={{marginBottom:scaledSize(35), alignSelf:'center'}}>
+        <BannerAd 
+        unitId={adUnitIdBanner}
+        size={BannerAdSize.LARGE_BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true
+        }}
+      />
+      </View>
         </LinearGradient>
     );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20
+        padding: scaledSize(20)
     },
     safeAreaContainer: {
         flex: 1,
         width: '100%',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        marginTop: 70,
+        marginTop: scaledSize(70),
     },
     tabs: {
         flexDirection: 'row',
-        marginBottom: 20,
+        marginBottom: scaledSize(20),
         width: '100%',
         justifyContent: 'space-around'
     },
     tab: {
-        padding: 10,
+        padding: scaledSize(10),
         alignItems: 'center',
-        borderBottomWidth: 2,
+        borderBottomWidth: scaledSize(2),
         borderBottomColor: 'transparent'
     },
     activeTab: {
@@ -135,40 +149,34 @@ const styles = StyleSheet.create({
     tabText: {
         color: '#fff',
         fontFamily: 'ComicSerifPro',
-        fontSize: 18
+        fontSize: scaledSize(18)
     },
     activeTabText: {
         fontWeight: 'bold',
-        fontSize: 20
+        fontSize: scaledSize(20)
     },
     statContainer: {
         flexDirection: 'column',
         justifyContent: 'space-between',
         width: '90%',
-        marginBottom: 20
-    
+        marginBottom: scaledSize(20)
     },
     statItem: {
-
         flexDirection: 'row',
-          // This will align the icon with the text vertically.
-
-        justifyContent: 'center' // This will center the content horizontally.
+        justifyContent: 'center'
     },
     statIcon: {
-        marginTop:4,
-        marginRight: 10,  // Add some space between the icon and the text
+        marginTop: scaledSize(4),
+        marginRight: scaledSize(10),
     },
-    
-    
     searchBar: {
-        height: 40,
+        height: scaledSize(40),
         borderColor: 'rgba(255, 255, 255, 0.5)',
-        borderWidth: 1,
-        borderRadius: 10,
+        borderWidth: scaledSize(1),
+        borderRadius: scaledSize(10),
         color: '#fff',
-        paddingHorizontal: 10,
-        marginBottom: 10,
+        paddingHorizontal: scaledSize(10),
+        marginBottom: scaledSize(10),
         width: '90%',
         fontFamily: 'ComicSerifPro'
     },
@@ -187,23 +195,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottomWidth: 1,
+        borderBottomWidth: scaledSize(1),
         borderBottomColor: '#fff',
-        paddingVertical: 20
+        paddingVertical: scaledSize(20)
     },
     word: {
-        fontSize: 20,
+        fontSize: scaledSize(20),
         color: '#fff',
         fontFamily: 'ComicSerifPro'
     },
     statText: {
-        fontSize: 28, // Increased the size
+        fontSize: scaledSize(28),
         color: '#fff',
         fontFamily: 'ComicSerifPro',
-        marginBottom: 50,
+        marginBottom: scaledSize(50),
         textAlign: 'center'
     },
-    
 });
 
 export default Stats;
