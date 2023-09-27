@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.sathyav30.Word_Twirl"
+      "package": "com.sathyav30.Word_Twirl",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
