@@ -34,25 +34,25 @@ const GRADIENT_OPTIONS = [
 //   { colors: ["#FFD700", "#4B0082"], requiredWordLength : 0 },   
 // ];
 
-// export const MAP_OPTIONS = [
-//   { idx: 0 },
-//   { idx: 1, requiredScore: 3000 },
-//   { idx: 2, requiredScore: 8000 },
-//   { idx: 3, requiredGamesPlayed: 65 },
-//   { idx: 5, requiredGamesPlayed: 300 },
-//   { idx: 4, requiredWordLength: 7 },
-//   { idx: 6, requiredWordLength: 9 },
-// ];
-
 export const MAP_OPTIONS = [
   { idx: 0 },
-  { idx: 1, requiredScore: 0 },
-  { idx: 2, requiredScore: 0 },
-  { idx: 3, requiredGamesPlayed: 0 },
-  { idx: 5, requiredGamesPlayed: 0 },
-  { idx: 4, requiredWordLength: 0 },
-  { idx: 6, requiredWordLength: 0 },
+  { idx: 1, requiredScore: 3000 },
+  { idx: 2, requiredScore: 8000 },
+  { idx: 3, requiredGamesPlayed: 65 },
+  { idx: 5, requiredGamesPlayed: 300 },
+  { idx: 4, requiredWordLength: 7 },
+  { idx: 6, requiredWordLength: 9 },
 ];
+
+// export const MAP_OPTIONS = [
+//   { idx: 0 },
+//   { idx: 1, requiredScore: 0 },
+//   { idx: 2, requiredScore: 0 },
+//   { idx: 3, requiredGamesPlayed: 0 },
+//   { idx: 5, requiredGamesPlayed: 0 },
+//   { idx: 4, requiredWordLength: 0 },
+//   { idx: 6, requiredWordLength: 0 },
+// ];
 
 
 

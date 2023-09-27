@@ -65,6 +65,8 @@ export default function Main({ navigation }) {
       ).start();
     });
   }, []);
+
+
   
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
@@ -156,7 +158,7 @@ export default function Main({ navigation }) {
         </View>
         <View style ={{marginBottom:scaledSize(30)}}>
         <BannerAd 
-        unitId={TestIds.BANNER}
+        unitId={adUnitIdBanner}
         size={BannerAdSize.LARGE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true

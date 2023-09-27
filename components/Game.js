@@ -83,6 +83,7 @@ export default function Game({ route, navigation}) {
   const {gradientColors} = useContext(GradientContext)
   const [wordsToPath, setWordsToPath] = useState({});
 
+
 const MARGIN_BETWEEN_CELLS = scaledSize(7);
 const cellSizeTemp = letters.length == 4 || letters.length == 5 ? (0.75 * windowHeight) / 10 : (0.6 * windowHeight) / 10 ;
 var cellSize;
@@ -106,7 +107,7 @@ const loadInterstitial = () => {
         
         setInterstitialLoaded(false);
         interstitial.load();
-        navigateToPostGame();
+    
 
       }
     );
@@ -455,8 +456,6 @@ useEffect(()=> {
             setTime(time-1);
         } else {
            
-            
-          
               if (interstitialLoaded) {
                   stopBGM();
                   interstitial.show();
@@ -725,19 +724,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: 'rgba(255, 255, 255, 0.4)',
     margin: (MARGIN_BETWEEN_CELLS),
-    borderRadius: scaledSize(5)
+    borderRadius: scaledSize(5),
+    fontFamily: 'ComicSerifPro',
   },
   filledCell: {
     backgroundColor: 'transparent',
+    fontFamily: 'ComicSerifPro',
   },
   emptyCell: {
     backgroundColor: 'transparent',
     borderWidth: 0,
+    fontFamily: 'ComicSerifPro',
+
   },
   cellText: {
     color: 'white',
     fontSize: scaledSize(36),
-    fontWeight: 'bold',
     fontFamily: 'ComicSerifPro',
   },
   highlightedCell: {

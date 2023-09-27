@@ -152,7 +152,6 @@ export const styles = StyleSheet.create({
         fontSize: scaledSize(18)
     },
     activeTabText: {
-        fontWeight: 'bold',
         fontSize: scaledSize(20)
     },
     statContainer: {

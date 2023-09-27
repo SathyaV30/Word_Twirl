@@ -66,11 +66,11 @@ export default function App() {
  useEffect(() => {
     async function initializeData() {
  
-        loadSoundSettings();
-        loadButtonSound();
-        loadCellSounds();
-        loadCISounds();
-        loadBGM();
+         loadSoundSettings();
+         loadButtonSound();
+         loadCellSounds();
+         loadCISounds();
+         loadBGM();
 
        
         const chosenGradient = await getSelectedGradient();

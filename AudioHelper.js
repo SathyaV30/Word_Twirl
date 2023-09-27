@@ -44,6 +44,8 @@ const soundFiles = [
     require('./assets/sounds/cells/35.wav'),
     require('./assets/sounds/cells/36.wav')
   ];
+
+  
   
 //Helper functions for load/play/stop audio.
 export async function loadBGM() {
@@ -104,6 +106,8 @@ export async function loadCISounds() {
 }
 
 export async function playButtonSound(isSoundMuted) {
+    
+    
     if (buttonSound && !isSoundMuted) {
         try {
             await buttonSound.stopAsync();
