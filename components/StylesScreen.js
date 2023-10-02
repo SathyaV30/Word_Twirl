@@ -108,7 +108,6 @@ export default function StylesScreen() {
                  (row === 2 && col === 2);
 
       }
-      // Assuming same corner logic for 6x6, but with extended index checks
       if (idx === 5) {
           return (row === 0 && (col === 0 || col === 5)) || 
                  (row === 5 && (col === 0 || col === 5)) ||
@@ -123,7 +122,6 @@ export default function StylesScreen() {
       if (idx === 3) {
           return (row + col) % 2 === 0;
       }
-      // Assuming same modulo check for 6x6
       if (idx === 6) {
           return (row + col) % 2 === 0;
       }
