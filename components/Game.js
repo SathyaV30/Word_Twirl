@@ -807,7 +807,7 @@ return (
       <TouchableOpacity style={[styles.closeButton, styles.pauseButton]} onPress={() => {setIsPaused(true); playButtonSound(isSoundMuted); pauseBGM(isMusicMuted)}}>
           <Text style={styles.closeButtonText}>Pause</Text>
       </TouchableOpacity>
-
+{/* 
       <View style ={{height:50, marginTop:scaledSize(90)}}>
       <BannerAd
         unitId={adUnitIdBanner}
@@ -816,7 +816,7 @@ return (
           requestNonPersonalizedAdsOnly: true
         }}
     />
-    </View>
+    </View> */}
     
     </SafeAreaView>
 

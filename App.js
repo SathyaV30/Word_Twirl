@@ -26,7 +26,6 @@ export default function App() {
   const [isSoundMuted, setIsSoundMuted] = useState(false);
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [gradientColors, setGradientColors] = useState(null);
-
   const setAppGradient = async (newGradient) => {
     await setSelectedGradient(newGradient);
     setGradientColors(newGradient);

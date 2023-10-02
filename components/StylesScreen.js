@@ -6,6 +6,7 @@ import GradientContext from '../GradientContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTotalScoreForTime, getAllWordsUserFound, getGamesPlayed } from '../StorageHelper';
 import { scaledSize } from '../ScalingUtility';
+
 const GRADIENT_OPTIONS = [
   { colors: ['#000000', '#000000'] },
   { colors: ['#E3242B', '#E3242B'], requiredScore: 1000 },
@@ -308,7 +309,6 @@ const styles = StyleSheet.create({
     fontSize: scaledSize(18)
   },
   activeTabText: {
-    fontWeight: 'bold',
     fontSize: scaledSize(20)
   },
   safeAreaContainer: {
