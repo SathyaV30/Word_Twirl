@@ -34,6 +34,7 @@ export default function Rules({modalVisible, setModalVisible}) {
           • If a word appears in <Text style={{ color: '#EED292' }}>yellow</Text>, it has been found before.
         </Text>
         <Text style={styles.rulesModalText}>• Longer words are awarded more points.</Text>
+        <Text style={styles.rulesModalText}>• Unlock more maps and backgrounds by completing the challenges. View your progress on the "Styles" screen.</Text>
   
   
         

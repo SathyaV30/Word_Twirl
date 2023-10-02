@@ -19,9 +19,9 @@ import SoundContext from '../SoundContext';
 import GradientContext from "../GradientContext";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import { scaledSize } from "../ScalingUtility";
+import { adUnitIdBanner } from "../AdHelper";
 const { width, height } = Dimensions.get("window");
 
-const adUnitIdBanner = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyyyyyy';
 //Main menu screen
 export default function Main({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);

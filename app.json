@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Word_Twirl",
-    "slug": "Word_Twirl",
+    "name": "Word Twirl",
+    "slug": "Word Twirl",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.sathyav30.Word_Twirl",
-      "versionCode": 2
+      "versionCode":4
     },
     "web": {
       "favicon": "./assets/favicon.png"
