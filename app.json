@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.sathyav30.Word_Twirl",
-      "versionCode":4
+      "versionCode":5
     },
     "web": {
       "favicon": "./assets/favicon.png"
