@@ -16,6 +16,12 @@
     "production": {}
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "sathya.venugopal2003@gmail.com",
+        "ascAppId": "6468644109",
+        "appleTeamId":"B7739YZ8TT"
+      }
+    }
   }
 }
