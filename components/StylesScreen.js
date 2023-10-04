@@ -7,6 +7,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTotalScoreForTime, getAllWordsUserFound, getGamesPlayed } from '../StorageHelper';
 import { scaledSize } from '../ScalingUtility';
 
+
+// test options
+
+// const GRADIENT_OPTIONS = [
+  //   { colors: ['#000000', '#000000'] },
+  //   { colors: ['#E3242B', '#E3242B'], requiredScore: 0 },
+  //   { colors: ['#2832c2', '#2832c2'], requiredScore: 0 },
+  //   { colors: ['#276221', '#276221'], requiredScore: 0 },
+  //   { colors: ['#33FF57', '#FF33D1'], requiredGamesPlayed: 0 },
+  //   { colors: ["#8B4513", "#2F4F4F"], requiredGamesPlayed: 0 },
+  //   { colors: ["#E55D87", "#5FC3E4"], requiredGamesPlayed : 0 },
+  //   { colors: ['#2E3192', '#1BFFFF'], requiredWordLength : 0 },   
+  //   { colors: ["#003973", "#E5E5BE"], requiredWordLength : 0 },
+  //   { colors: ["#FFD700", "#4B0082"], requiredWordLength : 0 },   
+  // ];
+  
+  // export const MAP_OPTIONS = [
+    //   { idx: 0 },
+    //   { idx: 1, requiredScore: 0 },
+    //   { idx: 2, requiredScore: 0 },
+    //   { idx: 3, requiredGamesPlayed: 0 },
+    //   { idx: 5, requiredGamesPlayed: 0 },
+    //   { idx: 4, requiredWordLength: 0 },
+    //   { idx: 6, requiredWordLength: 0 },
+    // ];
 const GRADIENT_OPTIONS = [
   { colors: ['#000000', '#000000'] },
   { colors: ['#E3242B', '#E3242B'], requiredScore: 1000 },
@@ -18,23 +43,8 @@ const GRADIENT_OPTIONS = [
   { colors: ['#2E3192', '#1BFFFF'], requiredWordLength : 6 },   
   { colors: ["#003973", "#E5E5BE"], requiredWordLength : 8 },
   { colors: ["#FFD700", "#4B0082"], requiredWordLength : 10 },   
-
 ];
-
-
-// const GRADIENT_OPTIONS = [
-//   { colors: ['#000000', '#000000'] },
-//   { colors: ['#E3242B', '#E3242B'], requiredScore: 0 },
-//   { colors: ['#2832c2', '#2832c2'], requiredScore: 0 },
-//   { colors: ['#276221', '#276221'], requiredScore: 0 },
-//   { colors: ['#33FF57', '#FF33D1'], requiredGamesPlayed: 0 },
-//   { colors: ["#8B4513", "#2F4F4F"], requiredGamesPlayed: 0 },
-//   { colors: ["#E55D87", "#5FC3E4"], requiredGamesPlayed : 0 },
-//   { colors: ['#2E3192', '#1BFFFF'], requiredWordLength : 0 },   
-//   { colors: ["#003973", "#E5E5BE"], requiredWordLength : 0 },
-//   { colors: ["#FFD700", "#4B0082"], requiredWordLength : 0 },   
-// ];
-
+    
 export const MAP_OPTIONS = [
   { idx: 0 },
   { idx: 1, requiredScore: 3000 },
@@ -45,15 +55,6 @@ export const MAP_OPTIONS = [
   { idx: 6, requiredWordLength: 9 },
 ];
 
-// export const MAP_OPTIONS = [
-//   { idx: 0 },
-//   { idx: 1, requiredScore: 0 },
-//   { idx: 2, requiredScore: 0 },
-//   { idx: 3, requiredGamesPlayed: 0 },
-//   { idx: 5, requiredGamesPlayed: 0 },
-//   { idx: 4, requiredWordLength: 0 },
-//   { idx: 6, requiredWordLength: 0 },
-// ];
 
 
 
@@ -101,7 +102,6 @@ export default function StylesScreen() {
         backgroundColor: 'gray'
     };
     const isCircleMap = (row, col) => {
-      // Removing corners for circle map
       if (idx === 2) {
           return (row === 0 && (col === 0 || col === 4)) || 
                  (row === 4 && (col === 0 || col === 4)) ||
@@ -342,8 +342,8 @@ const styles = StyleSheet.create({
     marginHorizontal: scaledSize(20),
   },
   preview: {
-    width: scaledSize(60),  // Square dimension
-    height: scaledSize(60), // Square dimension
+    width: scaledSize(60),  
+    height: scaledSize(60), 
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: scaledSize(8),

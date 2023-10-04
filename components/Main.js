@@ -70,30 +70,6 @@ export default function Main({ navigation }) {
   
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
-
-      {/* TBD whether to use, slows performace due to many rerenders*/}
-      {/* {rows.map((row, rowIndex) => (
-  <Animated.View
-    key={rowIndex}
-    style={[
-      styles.letterRow,
-      {
-        transform: [
-          {
-            translateX: animationRefs[rowIndex]?.animValue,
-          },
-        ],
-        zIndex: 0, // Ensure rows are behind the title and buttons
-      },
-    ]}
-  >
-    {row.map((letter, letterIndex) => (
-      <Text key={letterIndex} style={styles.letter}>
-        {letter}
-      </Text>
-    ))}
-  </Animated.View>
-))} */}
       <View style={[styles.overlayContainer, { zIndex: 1 }]}>
         <Text style={styles.titleText}>Word Twirl</Text>
 
