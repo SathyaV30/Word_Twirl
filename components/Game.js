@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, Dimensions, PanResponder, TouchableOpacity, Modal, SafeAreaView} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Svg, Line } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import * as words_a from './words/words_a';
 import * as words_b from './words/words_b';
 import * as words_c from './words/words_c';
@@ -31,29 +32,35 @@ import * as words_z from './words/words_z';
 import Trie from './Trie';
 import Rules from './Rules';
 import axios from 'axios';
-import { playButtonSound, playCellSound,playBGM,stopBGM,pauseBgm,playCorrectSound, pauseBGM, unpauseBGM} from '../AudioHelper';
+import { playButtonSound, playCellSound,playCorrectSound} from '../AudioHelper';
 import SoundContext from '../SoundContext';
 import { FontAwesome } from '@expo/vector-icons';
 import { BlurView } from "expo-blur";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
-
 import {
   updateTotalScoreForTime, 
   updateAllWordsUserFound,
   updateHighScoreIfNeeded,
   incrementGamesPlayed,  
   ALL_WORDS_USER_FOUND_KEY,
+  TOTAL_SCORE_KEY_PREFIX,
   unlockMap,
   getUnlockedMaps,
-  getTotalScoreForTime,
-  getGamesPlayed,
-  getAllWordsUserFound
+  getAllWordsUserFound,
+  updateTotalAvgLenForTime,
+  getStatForKey,
+  GAMES_PLAYED_KEY_PREFIX,
+  updateAccuracy
 } from '../StorageHelper';
 import { Axios } from 'axios';
 import GradientContext from '../GradientContext';
 import { MAP_OPTIONS } from './StylesScreen';
 import { scaledSize } from '../ScalingUtility';
 import { adUnitIdBanner, adUnitIdInterstitial } from '../AdHelper';
+import ScoreCounter from './ScoreCounter'; 
+import { ConfirmDialog } from 'react-native-simple-dialogs';
+import HapticContext from '../HapticContext';
+
 const windowHeight = Dimensions.get('window').height;
 
 const interstitial = InterstitialAd.createForAdRequest(adUnitIdInterstitial, {
@@ -61,7 +68,8 @@ const interstitial = InterstitialAd.createForAdRequest(adUnitIdInterstitial, {
 });
 //Handle game functionality
 export default function Game({ route, navigation}) {
-  
+
+  const initialRender = useRef(true);
   const [lines, setLines] = useState([]);
   const [visited, setVisited] = useState(new Set());
   const [viewPosition, setViewPosition] = useState({ x: 0, y: 0 });
@@ -75,15 +83,16 @@ export default function Game({ route, navigation}) {
   const [score, setScore] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [modalVisible,setModalVisible] = useState(false);
-  const { isSoundMuted, isMusicMuted, setIsSoundMuted, setIsMusicMuted } = useContext(SoundContext);
+  const { isSoundMuted, setIsSoundMuted } = useContext(SoundContext);
   const wordsUserFound = useRef(new Set());
   const hasRun = useRef(false);
   const [interstitialLoaded, setInterstitialLoaded] = useState(false);
-
   const {gradientColors} = useContext(GradientContext)
   const [wordsToPath, setWordsToPath] = useState({});
-
-
+  const [endGameModal, setEndGameModal] = useState(false);
+  const {isHapticEnabled, setIsHapticEnabled} = useContext(HapticContext);
+  const [attempts, setAttempts] = useState(0);
+  const [posAttempts, setPosAttempts] = useState(0);
 const MARGIN_BETWEEN_CELLS = scaledSize(7);
 const cellSizeTemp = letters.length == 4 || letters.length == 5 ? (0.75 * windowHeight) / 10 : (0.6 * windowHeight) / 10 ;
 var cellSize;
@@ -131,24 +140,22 @@ const loadInterstitial = () => {
     };
   }, [])
   
-    useEffect(() => {
-      playBGM(isMusicMuted);
-      return () => {
-          stopBGM(isMusicMuted);
-      };
-  }, []);
+  
   
   //check word after submit
   useEffect(()=> {
     if (isValidWord(submitString) && !wordsUserFound.current.has(submitString)) {
       let currentScore = score;
+      setPosAttempts(posAttempts+1);
       currentScore +=  calcScore(submitString);
       setScore(currentScore);
       wordsUserFound.current.add(submitString);
       playCorrectSound(isSoundMuted);
     } 
 
+
   }, [submitString])
+
 
   const calcScore = (word) => {
     if  (!word || word.length == 0) {
@@ -271,6 +278,14 @@ const onLayout = (event) => {
 
 
 useEffect(()=> {
+
+  if (initialRender.current) {
+    initialRender.current = false;
+  } else if (isHapticEnabled) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+  }
+  
+
   setCurrentString(highlightedCells
     .map(cell => {
       if (letters && letters[cell.row] && typeof letters[cell.row][cell.col] !== 'undefined') {
@@ -284,6 +299,8 @@ useEffect(()=> {
     if (getDraggedString()) {
     playCellSound(highlightedCells.length-1,isSoundMuted);
     }
+
+
 }, [highlightedCells]);
 
 
@@ -357,15 +374,6 @@ useEffect(()=> {
   
     return frequencyDist[Math.floor(Math.random() * frequencyDist.length)];
   }
-
-  // function getRandomLetter() {
-  //   const frequencyDist = [
-  //     'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'T', 'T', 'T', 'T', 'T', 'T', 'A', 'A', 'A', 'A', 'A', 'A', 'O', 'O', 'O', 'O', 'O', 'O', 'I', 'I', 'I', 'I', 'I', 'I', 'N', 'N', 'N', 'N', 'N', 'N', 'S', 'S', 'S', 'S', 'S', 'S', 'H', 'H', 'H', 'H', 'H', 'H', 'R', 'R', 'R', 'R', 'D', 'D', 'D', 'D', 'L', 'L', 'L', 'L', 'U', 'U', 'U', 'U', 'C', 'C', 'C', 'M', 'M', 'M', 'W', 'W', 'F', 'F', 'G', 'G', 'Y', 'Y', 'P', 'P', 'B', 'V', 'K', 'J', 'X', 'Q', 'Z'
-  //   ];
-
-  //   return frequencyDist[Math.floor(Math.random() * frequencyDist.length)];
-  // }
-  
 
   const getCellFromCoordinates = (x, y) => {
     for (let row = 0; row < letters.length; row++) {
@@ -457,11 +465,12 @@ useEffect(()=> {
         } else {
            
               if (interstitialLoaded) {
-                  stopBGM();
+            
                   interstitial.show();
               } 
-            
+        
             navigateToPostGame();
+            
                
         }
     }, 1000);
@@ -470,28 +479,20 @@ useEffect(()=> {
 }, [time, isPaused, navigation, allWords, wordsUserFound, score, selectedTime]);
 
 
-//TBD if to use
-const shouldShowInterstitial = (selectedTime) => {
-  const random = Math.random();
-  switch (selectedTime) {
-    case '1 min':
-      return random <= 0.33;
-    case '3 min':
-      return random <= 0.50;
-    case '5 min':
-      return random <= 0.75;
-    default:
-      return false;
-  }
-}
-
 const navigateToPostGame = async () => {
   // Update AsyncStorage
+  const words = Array.from(wordsUserFound.current);
+  const totalLength = words.reduce((acc, word) => acc + word.length, 0);
+  const numberOfWords = words.length;
+  const averageWordLength = numberOfWords > 0 ? totalLength / numberOfWords : 0;
+  await updateAccuracy(selectedTime, attempts, posAttempts);
+  await updateTotalAvgLenForTime(selectedTime, averageWordLength);
   await updateTotalScoreForTime(selectedTime, score);
-  await updateAllWordsUserFound(Array.from(wordsUserFound.current));
+  await updateAllWordsUserFound(words);
   await updateHighScoreIfNeeded(selectedTime, score);
   await incrementGamesPlayed(selectedTime);
   await checkAndUnlockMaps();
+
   // Navigate to PostGame
   navigation.reset({
     index: 0,
@@ -508,12 +509,11 @@ const navigateToPostGame = async () => {
     }],
   });
 
-  stopBGM(isMusicMuted);
 }
 
 const checkAndUnlockMaps = async () => {
-  const totalScore = await getTotalScoreForTime(selectedTime);
-  const gamesPlayed = await getGamesPlayed(selectedTime);
+  const totalScore = await getStatForKey(TOTAL_SCORE_KEY_PREFIX + selectedTime);
+  const gamesPlayed = await getStatForKey(GAMES_PLAYED_KEY_PREFIX + selectedTime);
   const allWordsUserFound = await getAllWordsUserFound();
   const longestWordFound = Math.max(...Array.from(allWordsUserFound).map(word => word.length), 0); 
 
@@ -579,6 +579,7 @@ const isCellFilled = (rowIndex, colIndex) => {
   },
   
     onPanResponderRelease: () => {
+      setAttempts(attempts+1);
       setHighlightedCells([]);
       setLines([]);
       setVisited(new Set());
@@ -608,27 +609,22 @@ useEffect(() => {
 
 
   const renderCell = (isFilled, letter = '', rowIndex, colIndex) => {
-  
-    let cellBorderStyle = {
-      borderWidth: 0.5,
-    };
 
     let isHighlighted = highlightedCells.some(cell => cell.row === rowIndex && cell.col === colIndex 
       && rowIndex < letters.length && rowIndex >= 0 && colIndex >= 0 && colIndex < letters.length && letters[rowIndex][colIndex] !== '');
 
     return (
-      <View
+      <BlurView
         {...panResponder.panHandlers}
         style={[
           styles.cell,
-          cellBorderStyle,
           isFilled ? styles.filledCell : styles.emptyCell,
           isHighlighted ? styles.highlightedCell : null
         ]}
         key={colIndex}
       >
         <Text style={styles.cellText}>{isFilled ? letter : ''}</Text>
-      </View>
+      </BlurView>
     );
   };
 
@@ -644,7 +640,7 @@ useEffect(() => {
             x2={line.end.x}
             y2={line.end.y}
             stroke="white"
-            strokeWidth="2"
+            strokeWidth={`${cellSize/5}`}
         />
     ))}
 </Svg>
@@ -709,10 +705,11 @@ const styles = StyleSheet.create({
   mapContainer: {},
   draggedString: {
     color: isValidWord(currentString) && wordsUserFound.current.has(currentString) ? '#EED292' : isValidWord(currentString) ? 'rgb(0, 175, 155)' : 'white',
-    fontSize: scaledSize(24),
+    fontSize: scaledSize(40),
     fontFamily: 'ComicSerifPro',
-    marginBottom: scaledSize(10),
     alignSelf: 'center',
+    marginTop:scaledSize(20),
+    marginBottom:scaledSize(20),
   },
   row: {
     flexDirection: 'row',
@@ -730,20 +727,24 @@ const styles = StyleSheet.create({
   filledCell: {
     backgroundColor: 'transparent',
     fontFamily: 'ComicSerifPro',
+    borderRadius: scaledSize(5),
   },
   emptyCell: {
     backgroundColor: 'transparent',
     borderWidth: 0,
     fontFamily: 'ComicSerifPro',
+    borderRadius: scaledSize(5),
+    display:'hidden',
 
   },
   cellText: {
     color: 'white',
-    fontSize: scaledSize(36),
+    fontSize: cellSize/2,
     fontFamily: 'ComicSerifPro',
   },
   highlightedCell: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: scaledSize(5),
   },
   scoreContainer: {
     display:'flex',
@@ -757,7 +758,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontFamily: 'ComicSerifPro',
-    fontSize: scaledSize(24),
+    fontSize: scaledSize(50),
     color: '#fff',
     textAlign: 'center',
     marginBottom: scaledSize(20)
@@ -769,55 +770,170 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: scaledSize(1),
+    width:scaledSize(200)
   },
   closeButtonText: {
     fontFamily: 'ComicSerifPro',
     color: '#fff',
-    fontSize: scaledSize(20),
+    fontSize: scaledSize(32),
+    textAlign:'center',
+    alignSelf:'center'
   },
   pauseButton: {
-    position: 'absolute',
-    top: scaledSize(30),     
-    right: scaledSize(30),   
+    borderRadius: scaledSize(15),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: scaledSize(1),
+    width:(letters?.length * (cellSize + 2 * MARGIN_BETWEEN_CELLS) - 2 * MARGIN_BETWEEN_CELLS)/2 - scaledSize(5),
+    marginBottom:scaledSize(5),
+    marginTop:scaledSize(5),
+    padding:scaledSize(10)
   },
   safeAreaContainer: {
     flex: 1,
     width: '100%',
-    justifyContent:'center',
-    alignItems:'center'
+    flexDirection: 'column', 
+    justifyContent: 'center',
+    alignItems: 'center'
   },
+  optionsContainer: {
+    flexDirection: 'row',
+    width: letters?.length * (cellSize + 2 * MARGIN_BETWEEN_CELLS) - 2 * MARGIN_BETWEEN_CELLS,
+    justifyContent:'space-between',
+    alignItems:'start',
+    alignSelf: 'center',
+  
+},
+timeScoreContainer : {
+  flexDirection:'column',
+  justifyContent:'start',
+  width: (letters?.length * (cellSize + 2 * MARGIN_BETWEEN_CELLS) - 2 * MARGIN_BETWEEN_CELLS)/2
+
+},
+timeText: {
+  color: time <= 5 ? '#ff0f0f' : 'white',
+  fontSize: scaledSize(50),
+  fontFamily: 'ComicSerifPro',
+  marginTop:scaledSize(5),
+  marginLeft:scaledSize(10)
+},
+
+scoreText: { 
+color: 'white',
+fontSize: scaledSize(50),
+fontFamily: 'ComicSerifPro',
+
+},
+clockContainer: {
+  flexDirection:'row',
+  alignItems:'center',
+  marginBottom:scaledSize(10)
+},
+optionsButtonContainer: {
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  display:'flex',
+
+
+},
+soundButton: {
+  borderRadius: scaledSize(15),
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  borderColor: 'rgba(255, 255, 255, 0.1)',
+  borderWidth: scaledSize(1),
+  width: scaledSize(60),
+  height:scaledSize(60),
+  marginVertical: scaledSize(2.5),
+  justifyContent:'center',
+
+
+
+}
+
+  
+
 });
 
-
-
- 
 return (
   <LinearGradient colors={gradientColors} style={styles.container}>
     <SafeAreaView style={styles.safeAreaContainer}>
-      <Text style={styles.text}>Time: {Math.floor(time / 60)}:{String(time % 60).padStart(2, '0')}</Text>
-      <Text style = {styles.text}>Score: {score}</Text>
+    <View style={styles.optionsContainer}>
+  <View style={styles.timeScoreContainer}>
+
+    <View style={styles.clockContainer}>
+      <FontAwesome name="clock-o" size={scaledSize(60)} color="#FFFFFF" />
+      <Text style={styles.timeText}>
+        {Math.floor(time / 60)}:{String(time % 60).padStart(2, '0')}
+      </Text>
+    </View>
+
+    <View style = {{display:'flex', flexDirection:'row'}}>
+
+    <Text style={styles.scoreText}><ScoreCounter targetScore={score}/></Text>
+    </View>
+
+  </View>
+  
+          
+  <View style={styles.optionsButtonContainer}>
+
+  <TouchableOpacity style={styles.soundButton} onPress={() => {setIsPaused(true); playButtonSound(isSoundMuted); }}>
+
+  <FontAwesome name="pause" size = {scaledSize(40)} style = {{textAlign:'center', color:'white'}}/>
+
+
+  </TouchableOpacity>
+  <View style = {{flexDirection:'row'}}>
+
+  <TouchableOpacity style={styles.soundButton} onPress={() => {
+    setIsSoundMuted(!isSoundMuted);
+    playButtonSound(isSoundMuted); 
+  }}>
+           
+                <FontAwesome style ={{textAlign:'center'}} name={isSoundMuted ? 'volume-off' : 'volume-up'} size={scaledSize(40)} color={isSoundMuted ? 'gray' : '#fff'} />
+  
+        </TouchableOpacity>
+
+
+</View>
+
+
+
+
+
+          </View>
+
+</View>
+
+      
+
+    
       <View style={styles.scoreContainer}>
-          <Text style={styles.draggedString}>{currentString || ''} </Text>
+      <Text style={styles.draggedString}>
+  {currentString && currentString.length >= 15 ? `${currentString.substring(0, 11)}...` : currentString}
+</Text>
+
           <Text style={styles.draggedString}>{isValidWord(currentString) && !wordsUserFound.current.has(currentString)? "+"+calcScore(currentString) : ''} </Text>
       </View>
+      
       <View style={styles.mapContainer} onLayout={onLayout} {...panResponder.panHandlers}>
           {renderMap()}
       </View>
      
-      <TouchableOpacity style={[styles.closeButton, styles.pauseButton]} onPress={() => {setIsPaused(true); playButtonSound(isSoundMuted); pauseBGM(isMusicMuted)}}>
-          <Text style={styles.closeButtonText}>Pause</Text>
-      </TouchableOpacity>
+    
 
-      <View style ={{height:50, marginTop:scaledSize(90)}}>
-      <BannerAd
+      <View style ={{height:50, marginTop:scaledSize(50)}}>
+      {/* <BannerAd
         unitId={adUnitIdBanner}
         size={BannerAdSize.LARGE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true
         }}
-    />
+    /> */}
+    <View style = {{width:320, height:50}}></View>
     </View>
-    
+     
     </SafeAreaView>
 
     {/* Pause Modal */}
@@ -832,31 +948,50 @@ return (
     >
         <LinearGradient colors={gradientColors} style={styles.modalContainer}>
             <Text style={styles.modalText}>Game Paused!</Text>
-            <TouchableOpacity onPress={() => {setIsPaused(false);playButtonSound(isSoundMuted);unpauseBGM(isMusicMuted)}} style={styles.closeButton}>
+            <TouchableOpacity onPress={() => {setIsPaused(false);playButtonSound(isSoundMuted);}} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>Resume</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {setModalVisible(true);playButtonSound(isSoundMuted)}} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>Rules</Text>
+            <TouchableOpacity 
+  onPress={() => {
+    setModalVisible(true);
+    playButtonSound(isSoundMuted);
+  }}
+  style={{ ...styles.closeButton, marginTop: scaledSize(20) }}
+>
+
+      <Text style={styles.closeButtonText}>Rules</Text>
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => {setEndGameModal(true)}}style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>End Game</Text>
             </TouchableOpacity>
+            <ConfirmDialog
+      title="Are you sure you want to end the game?"
+      message="The stats for this game will not be counted."
+      visible={endGameModal}
+      onTouchOutside={() => setEndGameModal(false)}
+      titleStyle={{ fontFamily: 'ComicSerifPro' }} 
+      messageStyle={{ fontFamily: 'ComicSerifPro' }} 
+      positiveButton={{
+          title: "YES",
+          onPress:() => {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Main' }]
+            });
+            playButtonSound(isSoundMuted);
+        },
+        
+          style: { fontFamily: 'ComicSerifPro', color:'black' },
+      }}
+      negativeButton={{
+          title: "NO",
+          onPress: () => {playButtonSound(isSoundMuted); setEndGameModal(false)},
+          style: { fontFamily: 'ComicSerifPro', color:'black' },
+      }}
+    />
 
-          <View >
-        <TouchableOpacity style={styles.closeButton} onPress={() => {
-            setIsSoundMuted(!isSoundMuted);
-            playButtonSound(isSoundMuted); 
-        }}>
-           
-                <FontAwesome name={isSoundMuted ? 'volume-off' : 'volume-up'} size={50} color={isSoundMuted ? 'gray' : '#fff'} />
-  
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.closeButton} onPress={() => {
-            setIsMusicMuted(!isMusicMuted);
-            playButtonSound(isSoundMuted); 
-        }}>
-           
-                <FontAwesome name={isMusicMuted ? 'music' : 'music'} size={50} color={isMusicMuted ? 'gray' : '#fff'} />
 
-        </TouchableOpacity>
-    </View>
+
         </LinearGradient>
         <Rules modalVisible = {modalVisible} setModalVisible = {setModalVisible}/>
       

@@ -2,7 +2,6 @@ import { Audio } from 'expo-av';
 let buttonSound;
 let correctSound;
 let incorrectSound;
-let bgm;
 const cellSounds = [];
 const VOLUME_LEVEL = 0.25;
 
@@ -42,23 +41,13 @@ const soundFiles = [
     require('./assets/sounds/cells/33.wav'),
     require('./assets/sounds/cells/34.wav'),
     require('./assets/sounds/cells/35.wav'),
-    require('./assets/sounds/cells/36.wav')
+    require('./assets/sounds/cells/36.wav'),
   ];
 
   
   
 //Helper functions for load/play/stop audio.
-export async function loadBGM() {
-    if (!bgm) {
-        const soundObject = new Audio.Sound();
-        try {
-            await soundObject.loadAsync(require('./assets/sounds/bgm.wav'));
-            bgm = soundObject;
-        } catch (error) {
-            console.error('Error loading button sound', error);
-        }
-    }
-}
+
 
 export async function loadButtonSound() {
     if (!buttonSound) {
@@ -73,6 +62,7 @@ export async function loadButtonSound() {
 }
 
 export async function loadCellSounds() {
+    
     for (let i = 0; i < 36; i++) {
         const soundObject = new Audio.Sound();
         try {
@@ -121,6 +111,7 @@ export async function playButtonSound(isSoundMuted) {
 }
 
 export async function playCellSound(index,isSoundMuted) {
+
     if (cellSounds[index] && !isSoundMuted) {
         try {
             await cellSounds[index].stopAsync();
@@ -154,60 +145,6 @@ export async function playIncorrectSound(isSoundMuted) {
             await incorrectSound.playAsync();
         } catch (error) {
             console.error('Error playing incorrect sound', error);
-        }
-    }
-}
-export async function playBGM(isMusicMuted) {
-    if (bgm && !isMusicMuted) {
-        try {
-            await bgm.stopAsync();
-            await bgm.setPositionAsync(0);
-            await bgm.setVolumeAsync(VOLUME_LEVEL);
-            
-            bgm.setOnPlaybackStatusUpdate(async (playbackStatus) => {
-                if (playbackStatus.didJustFinish) {
-                    setTimeout(async () => {
-                        await bgm.setPositionAsync(0);
-                        await bgm.playAsync();
-                    }, 500);  //500 ms delay
-                }
-            });
-
-            await bgm.playAsync();
-        } catch (error) {
-            console.error('Error playing background music', error);
-        }
-    }
-}
-
-
-export async function stopBGM(isMusicMuted) {
-    if (bgm && !isMusicMuted) {
-        try {
-            await bgm.stopAsync();
-        } catch (error) {
-            console.error('Error stopping background music', error);
-        }
-    }
-}
-
-export async function pauseBGM(isMusicMuted) {
-    if (bgm && !isMusicMuted) {
-        try {
-            await bgm.pauseAsync();
-        } catch (error) {
-            console.error('Error pausing background music', error);
-        }
-    }
-}
-
-
-export async function unpauseBGM(isMusicMuted) {
-    if (bgm && !isMusicMuted) {
-        try {
-            await bgm.playAsync();
-        } catch (error) {
-            console.error('Error unpausing background music', error);
         }
     }
 }

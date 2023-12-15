@@ -14,12 +14,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import GradientContext from "../GradientContext";
 import Svg, { Line, Circle } from "react-native-svg";
 import { scaledSize } from "../ScalingUtility";
+import { FontAwesome } from "@expo/vector-icons";
+import { Audio } from 'expo-av';
 export default function WordDetailsScreen({ route }) {
   const { word, letters, wordsToPath, fromGame } = route.params;
   const [wordDetails, setWordDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { gradientColors } = useContext(GradientContext);
+  const [soundObject, setSoundObject] = useState(null);
   const isCellInPath = (rowIndex, colIndex, path) => {
     return path.some(([row, col]) => rowIndex === row && colIndex === col);
   };
@@ -123,6 +126,7 @@ export default function WordDetailsScreen({ route }) {
     },
 });
 
+
   //fetch word info
   useEffect(() => {
     setLoading(true);
@@ -142,6 +146,51 @@ export default function WordDetailsScreen({ route }) {
       });
   }, [word]);
 
+
+  
+  useEffect(() => {
+    // Load audio after fetching the word details
+    const loadAudio = async () => {
+        if (wordDetails && wordDetails.phonetics) {
+            for (let phonetic of wordDetails.phonetics) {
+                if (phonetic.audio) { // Check if the audio property exists and is non-empty
+                    const sound = new Audio.Sound();
+                    try {
+                        await sound.loadAsync({ uri: phonetic.audio });
+                        setSoundObject(sound);
+                        break; // Exit the loop once we've found and loaded the first valid audio URL
+                    } catch (error) {
+                        console.error('Error loading word pronunciation', error);
+                    }
+                }
+            }
+        }
+    };
+
+    loadAudio();
+
+    // This will unload the sound when the component is unmounted
+    return () => {
+        soundObject && soundObject.unloadAsync();
+    };
+}, [wordDetails]);
+
+
+const playSound = async () => {
+  if (soundObject) {
+      try {
+          // Stop the sound if it's currently playing
+          await soundObject.stopAsync();
+          
+          // Start playing the sound from the beginning
+          await soundObject.playAsync();
+      } catch (error) {
+          console.error('Error playing word pronunciation', error);
+      }
+  }
+};
+
+
   if (loading) {
     return (
       <LinearGradient colors={gradientColors} style={styles.loadingContainer}>
@@ -150,7 +199,7 @@ export default function WordDetailsScreen({ route }) {
     );
   }
 
-  if (error) {
+  if (error ) {
     return (
       <LinearGradient colors={gradientColors} style={styles.container}>
         <SafeAreaView>
@@ -171,7 +220,7 @@ export default function WordDetailsScreen({ route }) {
               </Text>
               to search the web.
             </Text>
-            <View style={styles.board}>
+           {fromGame && <View style={styles.board}>
             {letters.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.rowContainer}>
                 {row.map((letter, colIndex) => (
@@ -249,7 +298,7 @@ export default function WordDetailsScreen({ route }) {
                   );
                 })}
             </Svg>
-          </View>
+          </View>}
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -264,7 +313,14 @@ export default function WordDetailsScreen({ route }) {
       <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView>
         <ScrollView style={styles.scrollView}>
-          <Text style={styles.title}>{wordDetails.word}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={styles.title}>
+              {wordDetails.word} 
+            </Text>
+          {soundObject && <TouchableOpacity onPress={playSound} style ={{marginBottom: scaledSize(20), marginLeft: scaledSize(5)}}>
+              <FontAwesome name="volume-up" size={scaledSize(24)} color="white"/>
+            </TouchableOpacity> }
+          </View>
           {wordDetails.meanings.map((meaning, idx) => (
             <View key={idx} style={styles.meaningContainer}>
               <Text style={styles.partOfSpeech}>{meaning.partOfSpeech}</Text>
@@ -281,11 +337,19 @@ export default function WordDetailsScreen({ route }) {
     )
   }
 
+
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView>
         <ScrollView style={styles.scrollView}>
-          <Text style={styles.title}>{wordDetails.word}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={styles.title}>
+              {wordDetails.word} 
+            </Text>
+          {soundObject && <TouchableOpacity onPress={playSound} style ={{marginBottom: scaledSize(20), marginLeft: scaledSize(5)}}>
+              <FontAwesome name="volume-up" size={scaledSize(24)} color="white"/>
+            </TouchableOpacity> }
+          </View>
           {wordDetails.meanings.map((meaning, idx) => (
             <View key={idx} style={styles.meaningContainer}>
               <Text style={styles.partOfSpeech}>{meaning.partOfSpeech}</Text>
@@ -296,7 +360,8 @@ export default function WordDetailsScreen({ route }) {
               ))}
             </View>
           ))}
-          <View style={styles.board}>
+         
+         { fromGame && <View style={styles.board}>
             {letters.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.rowContainer}>
                 {row.map((letter, colIndex) => (
@@ -374,7 +439,7 @@ export default function WordDetailsScreen({ route }) {
                   );
                 })}
             </Svg>
-          </View>
+          </View>}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

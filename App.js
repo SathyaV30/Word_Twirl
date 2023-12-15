@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,52 +11,114 @@ import { Ionicons } from '@expo/vector-icons';
 import PostGame from './components/PostGame';
 import WordDetailsScreen from './components/WordDetailsScreen';
 import Stats from './components/Stats';
-import { loadCellSounds, loadButtonSound, loadCISounds, loadBGM } from './AudioHelper';
-import { SoundProvider } from './SoundContext';
+import { loadCellSounds, loadButtonSound, loadCISounds } from './AudioHelper';
+import SoundContext, { SoundProvider } from './SoundContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import StylesScreen from './components/StylesScreen';
 import GradientContext from './GradientContext';
 import { getSelectedGradient, setSelectedGradient} from './StorageHelper';
 
+import HapticContext from './HapticContext';
+import Toast, { BaseToast } from 'react-native-toast-message';
+import { scaledSize } from './ScalingUtility';
+
 const Stack = createStackNavigator();
 
+const toastConfig = {
+  success: (props) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: 'black' }}
+      text2Style={{
+        fontSize: scaledSize(20),
+        fontFamily:'ComicSerifPro',
+        color:'black'
+      }}
+    />
+  ),
 
+};
 //Initiailize app and stack screens
 export default function App() {
+  // useEffect(()=> {
+  //   const clearAsyncStorage = async () => {
+  //     try {
+  //         await AsyncStorage.clear();
+  //         console.log('AsyncStorage has been cleared!');
+  //     } catch (e) {
+  //         console.error('Error clearing AsyncStorage:', e);
+  //     }
+  // };
+  
+  // clearAsyncStorage();
+  // }, [])
+  const initialRenderSound = useRef(true);
+  const initialRenderHaptic = useRef(true);
   const [isSoundMuted, setIsSoundMuted] = useState(false);
-  const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [gradientColors, setGradientColors] = useState(null);
+  const [isHapticEnabled, setIsHapticEnabled] = useState(true);
+
   const setAppGradient = async (newGradient) => {
     await setSelectedGradient(newGradient);
     setGradientColors(newGradient);
   };
 
-
   const loadSoundSettings = async () => {
     try {
       const soundMuted = await AsyncStorage.getItem('isSoundMuted');
-      const musicMuted = await AsyncStorage.getItem('isMusicMuted');
-      
       if (soundMuted !== null) setIsSoundMuted(JSON.parse(soundMuted));
-      if (musicMuted !== null) setIsMusicMuted(JSON.parse(musicMuted));
     } catch (error) {
       console.error('Failed to load sound settings:', error);
     }
   };
 
-  const saveSoundSettings = async () => {
+   const saveSoundSettings = async () => {
     try {
       await AsyncStorage.setItem('isSoundMuted', JSON.stringify(isSoundMuted));
-      await AsyncStorage.setItem('isMusicMuted', JSON.stringify(isMusicMuted));
+
     } catch (error) {
       console.error('Failed to save sound settings:', error);
     }
   };
 
+  const loadHapticSettings = async () => {
+    try {
+      const hapticEnabled = await AsyncStorage.getItem('isHapticEnabled');
+      if (hapticEnabled !== null) {
+        setIsHapticEnabled(JSON.parse(hapticEnabled));
+      }
+    } catch (error) {
+      console.error('Failed to load haptic settings:', error);
+    }
+  };
+
+
+  const saveHapticSettings = async () => {
+    try {
+      await AsyncStorage.setItem('isHapticEnabled', JSON.stringify(isHapticEnabled));
+    } catch (error) {
+      console.error('Failed to save haptic settings:', error);
+    }
+  };
+
+
   
   useEffect(() => {
+    if (initialRenderSound.current) {
+      initialRenderSound.current = false;
+      return;
+    }
     saveSoundSettings();
-  }, [isSoundMuted, isMusicMuted]);
+  }, [isSoundMuted]);
+  
+  useEffect(() => {
+    if (initialRenderHaptic.current) {
+      initialRenderHaptic.current = false;
+      return;
+    }
+    saveHapticSettings();
+  }, [isHapticEnabled]);
+
 
   const [fontsLoaded, fontError] = useFonts({
     'ComicSerifPro': require('./assets/fonts/HVD_Comic_Serif_Pro.otf'),
@@ -65,18 +127,17 @@ export default function App() {
  useEffect(() => {
     async function initializeData() {
  
-         loadSoundSettings();
-         loadButtonSound();
-         loadCellSounds();
-         loadCISounds();
-         loadBGM();
-
+        await loadSoundSettings();
+        await loadButtonSound();
+        await loadCellSounds();
+        await loadCISounds();
+        await loadHapticSettings();
        
         const chosenGradient = await getSelectedGradient();
         if (chosenGradient) {
             setGradientColors(chosenGradient);
         } else {
-            setGradientColors(["#000000", "#000000"]); 
+            setGradientColors(["#2E3192", "#1BFFFF"]); 
         }
     }
     
@@ -95,10 +156,10 @@ export default function App() {
   }
 
   return ( 
+    <HapticContext.Provider value = {{isHapticEnabled, setIsHapticEnabled}}>
     <GradientContext.Provider value={{gradientColors, setAppGradient}}>
-  <SoundProvider value={{ isSoundMuted, setIsSoundMuted, isMusicMuted, setIsMusicMuted }}>
+  <SoundContext.Provider value={{ isSoundMuted, setIsSoundMuted }}>
 
-    
     <NavigationContainer onLayout={onLayoutRootView}>
    
       <Stack.Navigator
@@ -193,16 +254,18 @@ export default function App() {
   },
   title:'',
 }} />
+
   
 
 
 
       </Stack.Navigator>
-    
+      <Toast config={toastConfig} />
   </NavigationContainer>
-  </SoundProvider>
+  </SoundContext.Provider>
   </GradientContext.Provider>
+  </HapticContext.Provider>
+  
   );
 
 }
-

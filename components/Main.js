@@ -5,68 +5,29 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Modal,
-  Animated,
-  SafeAreaView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Rules from "./Rules";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { playButtonSound } from '../AudioHelper';
-import { FontAwesome } from '@expo/vector-icons';
+import { pauseBGM, playBGM, playButtonSound, stopBGM, unpauseBGM } from '../AudioHelper';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import SoundContext from '../SoundContext';
 import GradientContext from "../GradientContext";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import { scaledSize } from "../ScalingUtility";
 import { adUnitIdBanner } from "../AdHelper";
+import HapticContext from "../HapticContext";
 const { width, height } = Dimensions.get("window");
+import Toast from 'react-native-toast-message';
 
 //Main menu screen
 export default function Main({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const { isSoundMuted, setIsSoundMuted, isMusicMuted, setIsMusicMuted } = useContext(SoundContext);
-  const {gradientColors} = useContext(GradientContext)
+  const { isSoundMuted, setIsSoundMuted } = useContext(SoundContext);
+  const {gradientColors} = useContext(GradientContext);
+  const {isHapticEnabled, setIsHapticEnabled} = useContext(HapticContext);
   
-
-
-  const numberOfRows = 12;
-  const text = "Word Twirl";
-  const lettersPerRow = text.length;
-  const rows = new Array(numberOfRows).fill(text.split(''));
-
-  const animationRefs = useRef(
-    new Array(numberOfRows)
-      .fill()
-      .map((_, idx) => ({
-        animValue: new Animated.Value(idx % 2 === 0 ? width : -width), // Odd rows start on the right, even rows on the left
-        offset: idx % lettersPerRow,
-      })),
-  ).current;
-  
-  useEffect(() => {
-    animationRefs.forEach((ref, index) => {
-      const speed = 10000;
-      const isEvenRow = index % 2 === 0;
-  
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(ref.animValue, {
-            toValue: isEvenRow ? -width : width,  
-            duration: speed,
-            useNativeDriver: true,
-          }),
-          Animated.timing(ref.animValue, { 
-            toValue: isEvenRow ? width : -width, 
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      ).start();
-    });
-  }, []);
-
-
   
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
@@ -76,18 +37,38 @@ export default function Main({ navigation }) {
         <View style={styles.buttonsContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => {navigation.navigate("Start Screen"); playButtonSound(isSoundMuted)}}
+            onPress={() => {navigation.navigate("Start Screen", {type:true}); playButtonSound(isSoundMuted)}}
           >
             <BlurView intensity={50} tint="light" style={styles.glassButton}>
+              <View style = {styles.iconWrapper}>      
+            <FontAwesome name="clock-o" size={scaledSize(38)} color="#fff" />
+              </View>
+
               <Text style={styles.buttonText}>Start</Text>
             </BlurView>
           </TouchableOpacity>
-
+          {/*Coming Soon
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {navigation.navigate("Start Screen", {type: false}); playButtonSound(isSoundMuted)}}
+          >
+            <BlurView intensity={50} tint="light" style={styles.glassButton}>
+              <View style = {styles.iconWrapper}>      
+              <FontAwesome name="puzzle-piece" size={scaledSize(38)} color="#fff" />
+              </View>
+              <Text style={styles.buttonText}>Puzzles</Text>
+            </BlurView>
+          </TouchableOpacity>
+      
+  */  }
           <TouchableOpacity
             style={styles.button}
             onPress={() => {setModalVisible(true);playButtonSound(isSoundMuted)}}
           >
             <BlurView intensity={50} tint="light" style={styles.glassButton}>
+            <View style = {styles.iconWrapper}>      
+            <FontAwesome name="gavel" size={scaledSize(38)} color="#fff" />
+            </View>
               <Text style={styles.buttonText}>Rules</Text>
             </BlurView>
           </TouchableOpacity>
@@ -97,49 +78,66 @@ export default function Main({ navigation }) {
             onPress={() =>{navigation.navigate("Stats"); playButtonSound(isSoundMuted)}}
           >
             <BlurView intensity={50} tint="light" style={styles.glassButton}>
+              <View style = {styles.iconWrapper}>      
+              <FontAwesome name="bar-chart" size={scaledSize(38)} color="#fff" />
+              </View>   
               <Text style={styles.buttonText}>Stats</Text>
             </BlurView>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() =>{navigation.navigate("StylesScreen"); playButtonSound(isSoundMuted)}}
-          >
-            <BlurView intensity={50} tint="light" style={styles.glassButton}>
-              <Text style={styles.buttonText}>Styles</Text>
-            </BlurView>
-          </TouchableOpacity>
-         
   
           <View style={styles.iconsContainer}>
-        <TouchableOpacity style={styles.iconButtonContainer} onPress={() => {
-            setIsSoundMuted(!isSoundMuted);
-            playButtonSound(isSoundMuted); 
-        }}>
+          <TouchableOpacity style={styles.iconButtonContainer} onPress={() => {
+    const original = isSoundMuted;
+    setIsSoundMuted(!isSoundMuted);
+    playButtonSound(isSoundMuted); 
+    Toast.show({
+      type: 'success',
+      position: 'top',
+      visibilityTime: 1000,
+      autoHide: true,
+      topOffset: 30,
+      bottomOffset: 40,
+      text2: original ? "Sound unmuted!" : "Sound muted!"
+    });
+    
+}}>
             <BlurView intensity={50} tint="light" style={[styles.glassButton, styles.iconGlassButton]}>
                 <FontAwesome name={isSoundMuted ? 'volume-off' : 'volume-up'} size={scaledSize(38)}color={isSoundMuted ? 'gray' : '#fff'} />
             </BlurView>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.iconButtonContainer} onPress={() => {
-            setIsMusicMuted(!isMusicMuted);
             playButtonSound(isSoundMuted); 
+            setIsHapticEnabled(!isHapticEnabled);
+            const original = isHapticEnabled;
+            setIsHapticEnabled(!isHapticEnabled);
+            Toast.show({
+              type: 'success',
+              position: 'top',
+              visibilityTime: 1000,
+              autoHide: true,
+              topOffset: 30,
+              bottomOffset: 40,
+              text2: !original ? "Haptic feedback enabled!" : "Haptic feedback disabled!"
+            });
         }}>
             <BlurView intensity={50} tint="light" style={[styles.glassButton, styles.iconGlassButton]}>
-                <FontAwesome name={isMusicMuted ? 'music' : 'music'} size={scaledSize(38)} color={isMusicMuted ? 'gray' : '#fff'} />
+            <FontAwesome5 name='hand-pointer' size={scaledSize(38)}color= {!isHapticEnabled ? 'gray' : '#fff'} />
             </BlurView>
         </TouchableOpacity>
     </View>
 
+
         </View>
-        <View style ={{marginBottom:scaledSize(30)}}>
-        <BannerAd 
+        <View style ={{marginBottom:scaledSize(40)}}>
+        {/* <BannerAd 
         unitId={adUnitIdBanner}
         size={BannerAdSize.LARGE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true
         }}
-      />
+      /> */}
+      <View style = {{width:320, height:100}}></View>
       </View>
       </View>
 
@@ -210,11 +208,13 @@ export const styles = StyleSheet.create({
     borderWidth: scaledSize(1),
     alignItems: "center",
     justifyContent: "center",
+    flexDirection:'row'
   },
   buttonText: {
     fontFamily: "ComicSerifPro",
     color: "#fff",
-    fontSize: scaledSize(40),
+    fontSize: scaledSize(38),
+    padding:0
   },
   iconsContainer: {
     flexDirection: 'row',
@@ -238,6 +238,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconWrapper: {
+    marginRight:scaledSize(10),
+    marginBottom:scaledSize(5),
+  }
 });
 
 

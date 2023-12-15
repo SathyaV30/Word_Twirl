@@ -8,24 +8,24 @@ const { width, height } = Dimensions.get('window');
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import GradientContext from '../GradientContext';
 import { MAP_OPTIONS } from './StylesScreen';
-import {  getUnlockedMaps, getTotalScoreForTime, getGamesPlayed, getAllWordsUserFound } from '../StorageHelper';
+import {  getUnlockedMaps, getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX} from '../StorageHelper';
 import { scaledSize } from '../ScalingUtility';
 import { adUnitIdBanner } from '../AdHelper';
 //Starting screen before game screen
-export default function StartScreen({navigation}) {
+export default function StartScreen({navigation, route}) {
     const [selectedMap, setSelectedMap] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const {isSoundMuted} = useContext(SoundContext)
     const {gradientColors}= useContext(GradientContext);
     const [unlockedMapIds, setUnlockedMapIds] = useState([]);
     const [userStats, setUserStats] = useState({
-    score: 0,
-    gamesPlayed: 0,
-    maxWordLength: 0
+        score: 0,
+        gamesPlayed: 0,
+        maxWordLength: 0
     });
     const availableMaps = MAP_OPTIONS.filter(mapOption => {
         if (unlockedMapIds.includes(mapOption.idx)) {
-        return true;  // Already unlocked
+        return true; 
         }
         if (mapOption.requiredScore && userStats.score < mapOption.requiredScore) {
         return false;
@@ -36,16 +36,18 @@ export default function StartScreen({navigation}) {
         if (mapOption.requiredWordLength && userStats.maxWordLength < mapOption.requiredWordLength) {
         return false;
         }
-        return true;  // All criteria met
+        return true;  
     });
+
     
+
     useEffect(() => {
         async function fetchUserStats() {
           const unlockedMaps = await getUnlockedMaps();
           
           const statsPromises = ['1 min', '3 min', '5 min'].map(async (time) => {
-            const score = await getTotalScoreForTime(time);
-            const gamesPlayed = await getGamesPlayed(time);
+            const score = await getStatForKey(TOTAL_SCORE_KEY_PREFIX + time);
+            const gamesPlayed = await getStatForKey(GAMES_PLAYED_KEY_PREFIX + time);
             return { score, gamesPlayed };
           });
       
@@ -164,8 +166,8 @@ export default function StartScreen({navigation}) {
 </ScrollView>
 
 
-
-                <Text style={styles.header}>Select a time limit:</Text>
+               <View>
+               {route.params.type ? <Text style={styles.header}>Select a time limit:</Text> :  <Text style={styles.header}>Select a save file:</Text>}
                 <View style={styles.buttonContainer}>
                     {['1 min', '3 min', '5 min'].map(time => (
                                                <TouchableOpacity key={time} style={selectedTime === time ? styles.selectedButton : styles.button} onPress={() => { setSelectedTime(selectedTime === time ? null : time); playButtonSound(isSoundMuted); }}>
@@ -176,6 +178,8 @@ export default function StartScreen({navigation}) {
                    
                     ))}
                 </View>
+                </View>
+                
 
                 <TouchableOpacity
                     style={styles.startButton}

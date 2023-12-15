@@ -25,7 +25,6 @@ export default function PostGame({ route, navigation }) {
     const [rewarded, setRewared] = useState(false);
     const [adLoadingText, setAdLoadingText] = useState('Watch a short video for double score?');
 
-
     //Handle rewarded ad functions
     useEffect(() => {
         const unsubscribeLoaded = rewardedAdv.addAdEventListener(RewardedAdEventType.LOADED, () => {
@@ -104,7 +103,7 @@ export default function PostGame({ route, navigation }) {
                             <Text style={styles.allWords}>All Words</Text>
                             {sortedWords.map((word, index) => (
                                 <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
-                                    <Text style={styles.word}>{word}</Text>
+                                   <Text style={[styles.word, { textDecorationLine:foundWords.includes(word.toUpperCase()) ?  'line-through' :'none', textDecorationColor:'#FFF' }]}>{word}</Text>
                                     <Text style={styles.points}>{getPointValue(word)} pts</Text>
                                 </TouchableOpacity>
                             ))}
@@ -129,7 +128,7 @@ export default function PostGame({ route, navigation }) {
                                 </BlurView>
                             </TouchableOpacity>
                         }
-                            <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Start Screen'); playButtonSound(isSoundMuted) }}>
+                            <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Start Screen', {type:true}); playButtonSound(isSoundMuted) }}>
                         <BlurView intensity={50} tint="light" style={styles.glassButton}>
                                 <Text style={styles.buttonText}>New Game</Text>
                         </BlurView>
@@ -188,7 +187,8 @@ const styles = StyleSheet.create({
     word: {
         fontSize: scaledSize(20),
         color: '#fff',
-        fontFamily:'ComicSerifPro'
+        fontFamily:'ComicSerifPro',
+
     },
     points: {
         fontSize: scaledSize(18),

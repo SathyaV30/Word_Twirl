@@ -4,9 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Progress from 'react-native-progress';
 import GradientContext from '../GradientContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getTotalScoreForTime, getAllWordsUserFound, getGamesPlayed } from '../StorageHelper';
+import { getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX } from '../StorageHelper';
 import { scaledSize } from '../ScalingUtility';
-
+import { FontAwesome } from '@expo/vector-icons';
 
 // test options
 
@@ -24,23 +24,21 @@ import { scaledSize } from '../ScalingUtility';
   // ];
   
   // export const MAP_OPTIONS = [
-    //   { idx: 0 },
-    //   { idx: 1, requiredScore: 0 },
-    //   { idx: 2, requiredScore: 0 },
-    //   { idx: 3, requiredGamesPlayed: 0 },
-    //   { idx: 5, requiredGamesPlayed: 0 },
-    //   { idx: 4, requiredWordLength: 0 },
-    //   { idx: 6, requiredWordLength: 0 },
-    // ];
+  //     { idx: 0 },
+  //     { idx: 1, requiredScore: 0 },
+  //     { idx: 2, requiredScore: 0 },
+  //     { idx: 5, requiredGamesPlayed: 0 },
+  //     { idx: 4, requiredWordLength: 0 },
+  //   ];
 const GRADIENT_OPTIONS = [
-  { colors: ['#000000', '#000000'] },
+  { colors: ['#2E3192', '#1BFFFF'] },
   { colors: ['#E3242B', '#E3242B'], requiredScore: 1000 },
   { colors: ['#2832c2', '#2832c2'], requiredScore: 5000 },
   { colors: ['#276221', '#276221'], requiredScore: 10000 },
   { colors: ['#33FF57', '#FF33D1'], requiredGamesPlayed: 25 },
   { colors: ["#8B4513", "#2F4F4F"], requiredGamesPlayed: 100 },
   { colors: ["#E55D87", "#5FC3E4"], requiredGamesPlayed : 500 },
-  { colors: ['#2E3192', '#1BFFFF'], requiredWordLength : 6 },   
+  { colors: ['#4776E6', '#8E54E9'], requiredWordLength : 6 },   
   { colors: ["#003973", "#E5E5BE"], requiredWordLength : 8 },
   { colors: ["#FFD700", "#4B0082"], requiredWordLength : 10 },   
 ];
@@ -49,10 +47,8 @@ export const MAP_OPTIONS = [
   { idx: 0 },
   { idx: 1, requiredScore: 3000 },
   { idx: 2, requiredScore: 8000 },
-  { idx: 3, requiredGamesPlayed: 65 },
   { idx: 5, requiredGamesPlayed: 300 },
   { idx: 4, requiredWordLength: 7 },
-  { idx: 6, requiredWordLength: 9 },
 ];
 
 
@@ -69,17 +65,17 @@ export default function StylesScreen() {
   useEffect(() => {
     async function fetchScoresAndWords() {
       const scores = await Promise.all([
-        getTotalScoreForTime('1 min'),
-        getTotalScoreForTime('3 min'),
-        getTotalScoreForTime('5 min')
+        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '1 min'),
+        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '3 min'),
+        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '5 min')
       ]);
       const totalScore = scores.reduce((acc, curr) => acc + curr, 0);
       const allWords = await getAllWordsUserFound();
       const longestWord = Math.max(...Array.from(allWords).map(word => word.length));
       const gamesPlayed = await Promise.all([
-        getGamesPlayed('1 min'),
-        getGamesPlayed('3 min'),
-        getGamesPlayed('5 min'),
+        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '1 min'),
+        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '3 min'),
+        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '5 min'),
       ]) 
       const totalGames = gamesPlayed.reduce((acc, curr) => acc + curr, 0);
 
