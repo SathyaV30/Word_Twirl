@@ -130,14 +130,14 @@ export default function Main({ navigation }) {
 
         </View>
         <View style ={{marginBottom:scaledSize(40)}}>
-        {/* <BannerAd 
+        <BannerAd 
         unitId={adUnitIdBanner}
         size={BannerAdSize.LARGE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true
         }}
-      /> */}
-      <View style = {{width:320, height:100}}></View>
+      />
+     
       </View>
       </View>
 

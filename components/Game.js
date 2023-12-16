@@ -924,14 +924,13 @@ return (
     
 
       <View style ={{height:50, marginTop:scaledSize(50)}}>
-      {/* <BannerAd
+      <BannerAd
         unitId={adUnitIdBanner}
         size={BannerAdSize.LARGE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true
         }}
-    /> */}
-    <View style = {{width:320, height:50}}></View>
+    />
     </View>
      
     </SafeAreaView>
