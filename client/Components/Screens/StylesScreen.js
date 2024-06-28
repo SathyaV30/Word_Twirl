@@ -2,11 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Progress from 'react-native-progress';
-import GradientContext from '../GradientContext';
+import GradientContext from '../../Context/GradientContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX } from '../StorageHelper';
-import { scaledSize } from '../ScalingUtility';
+import { getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX } from '../../Helper/StorageHelper';
+import { scaledSize } from '../../Helper/ScalingHelper';
 import { FontAwesome } from '@expo/vector-icons';
+import AuthContext from '../../Context/AuthContext';
 
 // test options
 
@@ -45,10 +46,10 @@ const GRADIENT_OPTIONS = [
     
 export const MAP_OPTIONS = [
   { idx: 0 },
-  { idx: 1, requiredScore: 3000 },
-  { idx: 2, requiredScore: 8000 },
-  { idx: 5, requiredGamesPlayed: 300 },
-  { idx: 4, requiredWordLength: 7 },
+  { idx: 1},
+  { idx: 2 },
+  { idx: 5},
+  { idx: 4},
 ];
 
 
@@ -60,22 +61,22 @@ export default function StylesScreen() {
   const [totalScore, setTotalScore] = useState(0);
   const [longestWordLength, setLongestWordLength] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
-  const [activeTab, setActiveTab] = useState('Background Color');
+  const {userId} = useContext(AuthContext);
 
   useEffect(() => {
     async function fetchScoresAndWords() {
       const scores = await Promise.all([
-        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '1 min'),
-        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '3 min'),
-        getStatForKey(TOTAL_SCORE_KEY_PREFIX + '5 min')
+        getStatForKey(userId, TOTAL_SCORE_KEY_PREFIX + '1 min'),
+        getStatForKey(userId,TOTAL_SCORE_KEY_PREFIX + '3 min'),
+        getStatForKey(userId,TOTAL_SCORE_KEY_PREFIX + '5 min')
       ]);
       const totalScore = scores.reduce((acc, curr) => acc + curr, 0);
-      const allWords = await getAllWordsUserFound();
+      const allWords = await getAllWordsUserFound(userId);
       const longestWord = Math.max(...Array.from(allWords).map(word => word.length));
       const gamesPlayed = await Promise.all([
-        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '1 min'),
-        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '3 min'),
-        getStatForKey(GAMES_PLAYED_KEY_PREFIX + '5 min'),
+        getStatForKey(userId,GAMES_PLAYED_KEY_PREFIX + '1 min'),
+        getStatForKey(userId,GAMES_PLAYED_KEY_PREFIX + '3 min'),
+        getStatForKey(userId,GAMES_PLAYED_KEY_PREFIX + '5 min'),
       ]) 
       const totalGames = gamesPlayed.reduce((acc, curr) => acc + curr, 0);
 
@@ -86,60 +87,6 @@ export default function StylesScreen() {
     
     fetchScoresAndWords();
   }, []);
-
-  function renderShape(idx) {
-    const matrixSize = (idx === 0 ? 4 : idx == 1 || idx == 2 || idx == 3 ? 5 : 6); // 4x4, 5x5, 6x6
-    const cellSizeTemp = (90 - matrixSize * 4) / matrixSize; // Adjusting for margins between cells
-    const cellSize = scaledSize(cellSizeTemp);
-    const cellStyle = {
-        width: cellSize,
-        height: cellSize,
-        margin: 2,
-        backgroundColor: 'gray'
-    };
-    const isCircleMap = (row, col) => {
-      if (idx === 2) {
-          return (row === 0 && (col === 0 || col === 4)) || 
-                 (row === 4 && (col === 0 || col === 4)) ||
-                 (row === 2 && col === 2);
-
-      }
-      if (idx === 5) {
-          return (row === 0 && (col === 0 || col === 5)) || 
-                 (row === 5 && (col === 0 || col === 5)) ||
-                 (row === 2 && (col === 2 || col === 3)) || 
-                 (row === 3 && (col === 2 || col === 3));
-      }
-      
-      return false;
-  };
-  
-  const isCoolPattern = (row, col) => {
-      if (idx === 3) {
-          return (row + col) % 2 === 0;
-      }
-      if (idx === 6) {
-          return (row + col) % 2 === 0;
-      }
-      return false;
-  };
-  
-    return (
-        <View style={{ flexDirection: 'column', width: scaledSize(90), height: scaledSize(90)}}>
-            {Array(matrixSize).fill(null).map((_, row) => (
-                <View style={{ flexDirection: 'row' }} key={row}>
-                    {Array(matrixSize).fill(null).map((_, col) => 
-                        isCircleMap(row, col) ? 
-                            <View style={{...cellStyle, backgroundColor: 'transparent'}} key={col}></View> :
-                            ((idx === 3 || idx==6) && !isCoolPattern(row, col)) ?
-                            <View style={{...cellStyle, backgroundColor: 'transparent'}} key={col}></View> :
-                            <View style={cellStyle} key={col}></View>
-                    )}
-                </View>
-            ))}
-        </View>
-    );
-}
 
   const GradientPreview = ({ gradient, index }) => {
     let isDisabled = false;
@@ -191,59 +138,7 @@ export default function StylesScreen() {
     );
   };
 
-  const MapPreview = ({ mapOption, index }) => {
-    let isDisabled = false;
-    let progress = 1;
-    let milestoneText = "";
-    let progressDetail = "";
-  
-    // Same logic to determine if the map is unlocked or not based on the required criteria
-    if (mapOption.requiredScore) {
-      isDisabled = totalScore < mapOption.requiredScore;
-      progress = Math.min(totalScore / mapOption.requiredScore, 1);
-      milestoneText = `Score ${mapOption.requiredScore} points`;
-      progressDetail = (mapOption.requiredScore - totalScore) > 0 
-             ? `${mapOption.requiredScore - totalScore} points left` 
-             : 'Unlocked!';
-    } else if (mapOption.requiredWordLength) {
-      isDisabled = longestWordLength < mapOption.requiredWordLength;
-      progress = isDisabled ? 0 : 1;
-      milestoneText = `Find a ${mapOption.requiredWordLength}-letter word`;
-      progressDetail = !isDisabled ? 'Unlocked!' : '';
-    } else if (mapOption.requiredGamesPlayed) {
-      isDisabled = gamesPlayed < mapOption.requiredGamesPlayed;
-      progress = Math.min(gamesPlayed / mapOption.requiredGamesPlayed, 1);
-      milestoneText = `Play ${mapOption.requiredGamesPlayed} games`;
-      progressDetail = (mapOption.requiredGamesPlayed - gamesPlayed) > 0 
-             ? `${mapOption.requiredGamesPlayed - gamesPlayed} games left` 
-             : 'Unlocked!';
-    }
-    else if (index == 0) {
-      milestoneText = 'Default Map';
-      progressDetail = 'Unlocked!'
-    }
-  
-    return (
-      <View style={styles.gradientItem}>
-        <TouchableOpacity 
-          style={[styles.previewContainer, isDisabled && styles.disabled]}
-          disabled={true}
-        >
-          {renderShape(mapOption.idx)}
-        </TouchableOpacity>
-      
-        <View style={styles.progressBarContainer}>
-          <Progress.Bar progress={progress} width={scaledSize(100)} height={scaledSize(20)} color="white" />
-          <Text style={styles.progressDetail}>{progressDetail}</Text>
-        </View>
-  
-        <View style={styles.textContainer}>
-          <Text style={styles.milestoneText}>{milestoneText}</Text>
-        </View>
-      </View>
-    );
-  };
-  
+
 
   
 
@@ -251,27 +146,17 @@ export default function StylesScreen() {
     <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer}>
         <View style={styles.tabs}>
-          {['Background Color', 'Maps'].map(tab => (
-            <TouchableOpacity key={tab} style={[styles.tab, activeTab === tab && styles.activeTab]} onPress={() => setActiveTab(tab)}>
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {activeTab === 'Background Color' ?
+  
           <View>
             <FlatList
               data={GRADIENT_OPTIONS}
               renderItem={({ item, index }) => <GradientPreview gradient={item} index={index} />} 
               keyExtractor={(item, index) => index.toString()}
             />
-          </View> :
-            <FlatList
-            data={MAP_OPTIONS}
-            renderItem={({ item, index }) => <MapPreview mapOption={item} index = {index} />} 
-            keyExtractor={(item) => item.idx.toString()}
-          />
-        }
+          </View> 
+
+          </View>
+        
       </SafeAreaView>
     </LinearGradient>
   );

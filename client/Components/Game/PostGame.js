@@ -2,13 +2,13 @@ import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { playButtonSound } from '../AudioHelper';
-import SoundContext from '../SoundContext';
-import GradientContext from '../GradientContext';
+import { playButtonSound } from '../../Helper/AudioHelper';
+import SoundContext from '../../Context/SoundContext';
+import GradientContext from '../../Context/GradientContext';
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType, RewardedAd } from 'react-native-google-mobile-ads';
-import { updateHighScoreIfNeeded, updateTotalScoreForTime } from '../StorageHelper';
-import { scaledSize } from '../ScalingUtility';
-import { adUnitIdRewarded } from '../AdHelper';
+import { updateHighScoreIfNeeded, updateTotalScoreForTime } from '../../Helper/StorageHelper';
+import { scaledSize } from '../../Helper/ScalingHelper';
+import { adUnitIdRewarded } from '../../Helper/AdHelper';
 
 
 const rewardedAdv = RewardedAd.createForAdRequest(adUnitIdRewarded, {

@@ -29,11 +29,11 @@ import * as words_w from './words/words_w';
 import * as words_x from './words/words_x';
 import * as words_y from './words/words_y';
 import * as words_z from './words/words_z';
-import Trie from './Trie';
-import Rules from './Rules';
+import Trie from '../Screens/Trie';
+import Rules from '../Screens/Rules';
 import axios from 'axios';
-import { playButtonSound, playCellSound,playCorrectSound} from '../AudioHelper';
-import SoundContext from '../SoundContext';
+import { playButtonSound, playCellSound,playCorrectSound} from '../../Helper/AudioHelper';
+import SoundContext from '../../Context/SoundContext';
 import { FontAwesome } from '@expo/vector-icons';
 import { BlurView } from "expo-blur";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
@@ -51,15 +51,18 @@ import {
   getStatForKey,
   GAMES_PLAYED_KEY_PREFIX,
   updateAccuracy
-} from '../StorageHelper';
+} from '../../Helper/StorageHelper';
 import { Axios } from 'axios';
-import GradientContext from '../GradientContext';
-import { MAP_OPTIONS } from './StylesScreen';
-import { scaledSize } from '../ScalingUtility';
-import { adUnitIdBanner, adUnitIdInterstitial } from '../AdHelper';
-import ScoreCounter from './ScoreCounter'; 
+import GradientContext from '../../Context/GradientContext';
+import { MAP_OPTIONS } from '../Screens/StylesScreen';
+import { scaledSize } from '../../Helper/ScalingHelper';
+import { adUnitIdBanner, adUnitIdInterstitial } from '../../Helper/AdHelper';
+import ScoreCounter from '../Screens/ScoreCounter'; 
 import { ConfirmDialog } from 'react-native-simple-dialogs';
-import HapticContext from '../HapticContext';
+import HapticContext from '../../Context/HapticContext';
+import AuthContext from '../../Context/AuthContext';
+
+
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -68,6 +71,11 @@ const interstitial = InterstitialAd.createForAdRequest(adUnitIdInterstitial, {
 });
 //Handle game functionality
 export default function Game({ route, navigation}) {
+
+
+
+
+
 
   const initialRender = useRef(true);
   const [lines, setLines] = useState([]);
@@ -84,6 +92,7 @@ export default function Game({ route, navigation}) {
   const [isPaused, setIsPaused] = useState(false);
   const [modalVisible,setModalVisible] = useState(false);
   const { isSoundMuted, setIsSoundMuted } = useContext(SoundContext);
+  const {userId} = useContext(AuthContext);
   const wordsUserFound = useRef(new Set());
   const hasRun = useRef(false);
   const [interstitialLoaded, setInterstitialLoaded] = useState(false);
@@ -378,7 +387,7 @@ useEffect(()=> {
   const getCellFromCoordinates = (x, y) => {
     for (let row = 0; row < letters.length; row++) {
       for (let col = 0; col < (letters[0] || []).length; col++) {
-        const cellLeft = col * (cellSize + 2*MARGIN_BETWEEN_CELLS);
+        const cellLeft = col * (cellSize + 2* MARGIN_BETWEEN_CELLS);
         const cellRight = cellLeft + cellSize;
         const cellTop = row * (cellSize + 2*MARGIN_BETWEEN_CELLS);
         const cellBottom = cellTop + cellSize;
@@ -485,13 +494,13 @@ const navigateToPostGame = async () => {
   const totalLength = words.reduce((acc, word) => acc + word.length, 0);
   const numberOfWords = words.length;
   const averageWordLength = numberOfWords > 0 ? totalLength / numberOfWords : 0;
-  await updateAccuracy(selectedTime, attempts, posAttempts);
-  await updateTotalAvgLenForTime(selectedTime, averageWordLength);
-  await updateTotalScoreForTime(selectedTime, score);
-  await updateAllWordsUserFound(words);
-  await updateHighScoreIfNeeded(selectedTime, score);
-  await incrementGamesPlayed(selectedTime);
-  await checkAndUnlockMaps();
+  await updateAccuracy(userId, selectedTime, attempts, posAttempts);
+  await updateTotalAvgLenForTime(userId, selectedTime, averageWordLength);
+  await updateTotalScoreForTime(userId, selectedTime, score);
+  await updateAllWordsUserFound(userId, words);
+  await updateHighScoreIfNeeded(userId, selectedTime, score);
+  await incrementGamesPlayed(userId, selectedTime);
+  await checkAndUnlockMaps(userId);
 
   // Navigate to PostGame
   navigation.reset({
@@ -512,12 +521,12 @@ const navigateToPostGame = async () => {
 }
 
 const checkAndUnlockMaps = async () => {
-  const totalScore = await getStatForKey(TOTAL_SCORE_KEY_PREFIX + selectedTime);
-  const gamesPlayed = await getStatForKey(GAMES_PLAYED_KEY_PREFIX + selectedTime);
-  const allWordsUserFound = await getAllWordsUserFound();
+  const totalScore = await getStatForKey(userId, TOTAL_SCORE_KEY_PREFIX + selectedTime);
+  const gamesPlayed = await getStatForKey(userId, GAMES_PLAYED_KEY_PREFIX + selectedTime);
+  const allWordsUserFound = await getAllWordsUserFound(userId);
   const longestWordFound = Math.max(...Array.from(allWordsUserFound).map(word => word.length), 0); 
 
-  const unlockedMaps = await getUnlockedMaps();
+  const unlockedMaps = await getUnlockedMaps(userId);
   for (const mapOption of MAP_OPTIONS) {
     if (!unlockedMaps.includes(mapOption.idx)) {
       if ((mapOption.requiredScore && totalScore >= mapOption.requiredScore) ||
@@ -612,6 +621,7 @@ useEffect(() => {
 
     let isHighlighted = highlightedCells.some(cell => cell.row === rowIndex && cell.col === colIndex 
       && rowIndex < letters.length && rowIndex >= 0 && colIndex >= 0 && colIndex < letters.length && letters[rowIndex][colIndex] !== '');
+
 
     return (
       <BlurView
@@ -735,7 +745,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ComicSerifPro',
     borderRadius: scaledSize(5),
     display:'hidden',
-
+    opacity: 0,
   },
   cellText: {
     color: 'white',
@@ -848,7 +858,6 @@ soundButton: {
   justifyContent:'center',
 
 
-
 }
 
   
@@ -897,11 +906,6 @@ return (
 
 
 </View>
-
-
-
-
-
           </View>
 
 </View>

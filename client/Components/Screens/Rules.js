@@ -2,10 +2,10 @@ import React, {useContext} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { playButtonSound } from '../AudioHelper';
-import SoundContext from '../SoundContext';
-import GradientContext from '../GradientContext';
-import { scaledSize } from '../ScalingUtility';
+import { playButtonSound } from '../../Helper/AudioHelper';
+import SoundContext from '../../Context/SoundContext';
+import GradientContext from '../../Context/GradientContext';
+import { scaledSize } from '../../Helper/ScalingHelper';
 
 //Rules modal
 export default function Rules({modalVisible, setModalVisible}) {

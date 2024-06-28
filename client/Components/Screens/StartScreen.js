@@ -2,21 +2,23 @@ import React, { useState, useContext, useEffect} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { playButtonSound } from '../AudioHelper';
-import SoundContext from '../SoundContext';
+import { playButtonSound } from '../../Helper/AudioHelper';
+import SoundContext from '../../Context/SoundContext';
 const { width, height } = Dimensions.get('window');
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
-import GradientContext from '../GradientContext';
+import GradientContext from '../../Context/GradientContext';
 import { MAP_OPTIONS } from './StylesScreen';
-import {  getUnlockedMaps, getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX} from '../StorageHelper';
-import { scaledSize } from '../ScalingUtility';
-import { adUnitIdBanner } from '../AdHelper';
+import {  getUnlockedMaps, getStatForKey, getAllWordsUserFound, TOTAL_SCORE_KEY_PREFIX, GAMES_PLAYED_KEY_PREFIX} from '../../Helper/StorageHelper';
+import { scaledSize } from '../../Helper/ScalingHelper';
+import { adUnitIdBanner } from '../../Helper/AdHelper';
+import AuthContext from '../../Context/AuthContext';
 //Starting screen before game screen
 export default function StartScreen({navigation, route}) {
     const [selectedMap, setSelectedMap] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const {isSoundMuted} = useContext(SoundContext)
     const {gradientColors}= useContext(GradientContext);
+    const {userId} = useContext(AuthContext);
     const [unlockedMapIds, setUnlockedMapIds] = useState([]);
     const [userStats, setUserStats] = useState({
         score: 0,
@@ -43,18 +45,18 @@ export default function StartScreen({navigation, route}) {
 
     useEffect(() => {
         async function fetchUserStats() {
-          const unlockedMaps = await getUnlockedMaps();
+          const unlockedMaps = await getUnlockedMaps(userId);
           
           const statsPromises = ['1 min', '3 min', '5 min'].map(async (time) => {
-            const score = await getStatForKey(TOTAL_SCORE_KEY_PREFIX + time);
-            const gamesPlayed = await getStatForKey(GAMES_PLAYED_KEY_PREFIX + time);
+            const score = await getStatForKey(userId, TOTAL_SCORE_KEY_PREFIX + time);
+            const gamesPlayed = await getStatForKey(userId, GAMES_PLAYED_KEY_PREFIX + time);
             return { score, gamesPlayed };
           });
       
           const allStats = await Promise.all(statsPromises);
           const totalScore = allStats.reduce((total, stat) => total + stat.score, 0);
           const totalGamesPlayed = allStats.reduce((total, stat) => total + stat.gamesPlayed, 0);
-          const allWords = await getAllWordsUserFound();
+          const allWords = await getAllWordsUserFound(userId);
           const maxWordLength = [...allWords].reduce((max, word) => Math.max(max, word.length), 0);
           
           setUserStats({

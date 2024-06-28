@@ -10,14 +10,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Rules from "./Rules";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { pauseBGM, playBGM, playButtonSound, stopBGM, unpauseBGM } from '../AudioHelper';
+import {  playButtonSound } from '../../Helper/AudioHelper';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import SoundContext from '../SoundContext';
-import GradientContext from "../GradientContext";
+import SoundContext from '../../Context/SoundContext';
+import GradientContext from "../../Context/GradientContext";
 import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
-import { scaledSize } from "../ScalingUtility";
-import { adUnitIdBanner } from "../AdHelper";
-import HapticContext from "../HapticContext";
+import { scaledSize } from "../../Helper/ScalingHelper";
+import { adUnitIdBanner } from "../../Helper/AdHelper";
+import HapticContext from "../../Context/HapticContext";
 const { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
 
@@ -47,20 +47,7 @@ export default function Main({ navigation }) {
               <Text style={styles.buttonText}>Start</Text>
             </BlurView>
           </TouchableOpacity>
-          {/*Coming Soon
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {navigation.navigate("Start Screen", {type: false}); playButtonSound(isSoundMuted)}}
-          >
-            <BlurView intensity={50} tint="light" style={styles.glassButton}>
-              <View style = {styles.iconWrapper}>      
-              <FontAwesome name="puzzle-piece" size={scaledSize(38)} color="#fff" />
-              </View>
-              <Text style={styles.buttonText}>Puzzles</Text>
-            </BlurView>
-          </TouchableOpacity>
-      
-  */  }
+
           <TouchableOpacity
             style={styles.button}
             onPress={() => {setModalVisible(true);playButtonSound(isSoundMuted)}}
@@ -82,6 +69,18 @@ export default function Main({ navigation }) {
               <FontAwesome name="bar-chart" size={scaledSize(38)} color="#fff" />
               </View>   
               <Text style={styles.buttonText}>Stats</Text>
+            </BlurView>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>{navigation.navigate("Profile"); playButtonSound(isSoundMuted)}}
+          >
+            <BlurView intensity={50} tint="light" style={styles.glassButton}>
+              <View style = {styles.iconWrapper}>      
+              <FontAwesome name="user" size={scaledSize(38)} color="#fff" />
+              </View>   
+              <Text style={styles.buttonText}>Profile</Text>
             </BlurView>
           </TouchableOpacity>
   
@@ -129,16 +128,7 @@ export default function Main({ navigation }) {
 
 
         </View>
-        <View style ={{marginBottom:scaledSize(40)}}>
-        <BannerAd 
-        unitId={adUnitIdBanner}
-        size={BannerAdSize.LARGE_BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true
-        }}
-      />
-     
-      </View>
+   
       </View>
 
 

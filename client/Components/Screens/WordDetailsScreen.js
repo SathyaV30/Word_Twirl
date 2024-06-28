@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import GradientContext from "../GradientContext";
+import GradientContext from "../../Context/GradientContext";
 import Svg, { Line, Circle } from "react-native-svg";
-import { scaledSize } from "../ScalingUtility";
+import { scaledSize } from "../../Helper/ScalingHelper";
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
 export default function WordDetailsScreen({ route }) {
