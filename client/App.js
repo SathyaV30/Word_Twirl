@@ -2,31 +2,30 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import Main from './components/Main';
-import StartScreen from './components/StartScreen';
-import Game from './components/Game';
+import Main from './Components/Screens/Main';
+import StartScreen from './Components/Screens/StartScreen';
+import Game from './Components/Game/Game';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import PostGame from './components/PostGame';
-import WordDetailsScreen from './components/WordDetailsScreen';
-import Stats from './components/Stats';
-import { loadCellSounds, loadButtonSound, loadCISounds } from './AudioHelper';
-import SoundContext, { SoundProvider } from './SoundContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import StylesScreen from './components/StylesScreen';
-import GradientContext from './GradientContext';
-import { getSelectedGradient, setSelectedGradient} from './StorageHelper';
-import AuthContext  from './AuthContext';
-import HapticContext from './HapticContext';
+import PostGame from './Components/Game/PostGame';
+import WordDetailsScreen from './Components/Screens/WordDetailsScreen';
+import Stats from './Components/Screens/Stats';
+import { loadCellSounds, loadButtonSound, loadCISounds } from './Helper/AudioHelper';
+import SoundContext from './Context/SoundContext';
+import StylesScreen from './Components/Screens/StylesScreen';
+import GradientContext from './Context/GradientContext';
+import { getSelectedGradient, setSelectedGradient} from './Helper/StorageHelper';
+import AuthContext, { AuthProvider } from './Context/AuthContext';
+import HapticContext from './Context/HapticContext';
 import Toast, { BaseToast } from 'react-native-toast-message';
-import { scaledSize } from './ScalingUtility';
-import Welcome from './components/Welcome';
-import SignUp from './components/SignUp';
-import Login from './components/Login';
-import Profile from './components/Profile';
-import VerifyEmail from './components/VerifyEmail';
-
+import { scaledSize } from './Helper/ScalingHelper';
+import Welcome from './Components/Screens/Welcome';
+import SignUp from './Components/Auth/SignUp';
+import Login from './Components/Auth/Login';
+import Profile from './Components/Auth/Profile';
+import VerifyEmail from './Components/Auth/VerifyEmail';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 
@@ -41,7 +40,6 @@ const toastConfig = {
         color: 'black',
       }}
     />
-
   ),
   successTextSmall: (props) => (
     <BaseToast
@@ -52,10 +50,9 @@ const toastConfig = {
         fontFamily: 'ComicSerifPro',
         color: 'black',
       }}
+      text2NumberOfLines={2}
     />
-
   ),
-
   error: (props) => (
     <BaseToast
       {...props}
@@ -65,11 +62,10 @@ const toastConfig = {
         fontFamily: 'ComicSerifPro',
         color: 'black',
       }}
+      text2NumberOfLines={2}
     />
   ),
-
-  errorTextSmall: 
-  (props) => (
+  errorTextSmall: (props) => (
     <BaseToast
       {...props}
       style={{ borderLeftColor: 'red' }}
@@ -77,16 +73,10 @@ const toastConfig = {
         fontSize: scaledSize(14),
         fontFamily: 'ComicSerifPro',
         color: 'black',
-    
       }}
       text2NumberOfLines={2}
     />
   ),
-
-
-
-
-
 };
 
 // Navigator for authenticated users
@@ -140,7 +130,7 @@ const MainNavigator = () => (
         title: '',
       }}
     />
-        <MainStack.Screen
+    <MainStack.Screen
       name="Profile"
       component={Profile}
       options={{
@@ -245,8 +235,7 @@ const AuthNavigator = () => (
         title: '',
       }}
     />
-
-<AuthStack.Screen
+    <AuthStack.Screen
       name="VerifyEmail"
       component={VerifyEmail}
       options={{
@@ -267,20 +256,37 @@ export default function App() {
   const [gradientColors, setGradientColors] = useState(null);
   const [isHapticEnabled, setIsHapticEnabled] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState('');
+
+
+
 
   const checkLoginStatus = async () => {
-    const token = await AsyncStorage.getItem('userToken');
-    setIsLoggedIn(!!token);
+    const storedUserId = await AsyncStorage.getItem('userId');
+    if (storedUserId) {
+      login(storedUserId);
+    }
   };
 
-  const login = async (token) => {
-    await AsyncStorage.setItem('userToken', token);
+  const login = async (userId) => {
+    await AsyncStorage.setItem('userId', userId);
     setIsLoggedIn(true);
+    setUserId(userId);
+  };
+
+  const clearAsyncStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+    } catch (error) {
+      console.error('Failed to clear AsyncStorage:', error);
+    }
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('userId');
+    await clearAsyncStorage();
     setIsLoggedIn(false);
+    setUserId('');
   };
 
   const setAppGradient = async (newGradient) => {
@@ -375,17 +381,17 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthProvider value={{ isLoggedIn, userId, login, logout }}>
       <HapticContext.Provider value={{ isHapticEnabled, setIsHapticEnabled }}>
         <GradientContext.Provider value={{ gradientColors, setAppGradient }}>
           <SoundContext.Provider value={{ isSoundMuted, setIsSoundMuted }}>
             <NavigationContainer onLayout={onLayoutRootView}>
-              {!isLoggedIn ?  <AuthNavigator /> : <MainNavigator/>}
+              {!isLoggedIn ? <AuthNavigator /> : <MainNavigator />}
               <Toast config={toastConfig} />
             </NavigationContainer>
           </SoundContext.Provider>
         </GradientContext.Provider>
       </HapticContext.Provider>
-    </AuthContext.Provider>
+    </AuthProvider>
   );
 }
