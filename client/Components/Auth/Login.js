@@ -7,6 +7,7 @@ import {
   TextInput,
   Dimensions,
   ActivityIndicator,
+  Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import SoundContext from '../../Context/SoundContext';
@@ -16,8 +17,8 @@ import { playButtonSound } from '../../Helper/AudioHelper';
 import { scaledSize } from "../../Helper/ScalingHelper";
 import { FIREBASE_AUTH, FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import AuthContext from '../../Context/AuthContext';
-import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get("window");
 
@@ -36,32 +37,35 @@ export default function Login({ navigation }) {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      await response.user.reload(); // Reload user to get latest emailVerified status
+      await response.user.reload(); // Reload user to get the latest emailVerified status
       if (!response.user.emailVerified) {
         navigation.navigate('VerifyEmail', { user: response.user });
-        Toast.show({
-          type: 'errorTextSmall',
-          position: 'top',
-          visibilityTime: 1000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-          text2: "Email is not verified. Please verify your email to continue."
-        });
+        Alert.alert(
+          "Error",
+          "Email is not verified. Please verify your email to continue.",
+          [{ text: "OK" }]
+        );
       } else {
-        login(response.user.uid);
+        const userDoc = await getDoc(doc(FIRESTORE, 'users', response.user.uid));
+        if (userDoc.exists()) {
+          const { username, email } = userDoc.data();
+          login(response.user.uid, username, email);
+        } else {
+          console.error('User document does not exist.');
+          Alert.alert(
+            "Error",
+            "An error has occurred. Please try again.",
+            [{ text: "OK" }]
+          );
+        }
       }
     } catch (error) {
       console.log(error);
-      Toast.show({
-        type: 'errorTextSmall',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "An error has occurred. Please make sure your credentials are correct."
-      });
+      Alert.alert(
+        "Error",
+        "An error has occurred. Please make sure your credentials are correct.",
+        [{ text: "OK" }]
+      );
     } finally {
       setLoading(false);
     }
@@ -70,45 +74,37 @@ export default function Login({ navigation }) {
   const handlePasswordReset = async () => {
     const currentTime = new Date().getTime();
     if (lastResetTime.current && (currentTime - lastResetTime.current < 60000)) {
-      Toast.show({
-        type: 'error',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Please wait before retrying."
-      });
+      Alert.alert(
+        "Error",
+        "Please wait before retrying.",
+        [{ text: "OK" }]
+      );
       return;
     }
 
     lastResetTime.current = currentTime;
     try {
       if (!email || !email.includes('@')) {
-        alert('Please enter a valid email in the input.');
+        Alert.alert(
+          "Error",
+          "Please enter a valid email in the input.",
+          [{ text: "OK" }]
+        );
       } else {
         await sendPasswordResetEmail(auth, email);
-        Toast.show({
-          type: 'success',
-          position: 'top',
-          visibilityTime: 1000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-          text2: "Password reset email sent!"
-        });
+        Alert.alert(
+          "Success",
+          "Password reset email sent!",
+          [{ text: "OK" }]
+        );
       }
     } catch (error) {
       console.log(error);
-      Toast.show({
-        type: 'errorTextSmall',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "There was an error. Please make sure you have entered a valid email."
-      });
+      Alert.alert(
+        "Error",
+        "There was an error. Please make sure you have entered a valid email.",
+        [{ text: "OK" }]
+      );
     }
   };
 

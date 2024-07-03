@@ -7,6 +7,7 @@ import {
   TextInput,
   Dimensions,
   ActivityIndicator,
+  Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import SoundContext from '../../Context/SoundContext';
@@ -17,7 +18,6 @@ import { scaledSize } from "../../Helper/ScalingHelper";
 import { FIREBASE_AUTH, FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { createUserWithEmailAndPassword, sendEmailVerification, deleteUser } from "firebase/auth";
 import { doc, setDoc, getDocs, query, collection, where } from "firebase/firestore"; 
-import Toast from 'react-native-toast-message';
 import AuthContext from '../../Context/AuthContext';
 
 const { width, height } = Dimensions.get("window");
@@ -42,28 +42,20 @@ export default function SignUp({ navigation }) {
 
   const signUp = async () => {
     if (password !== confirmPassword) {
-      Toast.show({
-        type: 'error',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Passwords do not match."
-      });
+      Alert.alert(
+        "Error",
+        "Passwords do not match.",
+        [{ text: "OK" }]
+      );
       return;
     }
 
     if (!validateUsername(username)) {
-      Toast.show({
-        type: 'errorTextSmall',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Username cannot contain special characters or \nspaces."
-      });
+      Alert.alert(
+        "Error",
+        "Username cannot contain special characters or spaces.",
+        [{ text: "OK" }]
+      );
       return;
     }
 
@@ -80,15 +72,11 @@ export default function SignUp({ navigation }) {
       if (!querySnapshot.empty) {
         // Username exists, delete the user
         await deleteUser(user);
-        Toast.show({
-          type: 'error',
-          position: 'top',
-          visibilityTime: 1000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-          text2: "Username is already taken."
-        });
+        Alert.alert(
+          "Error",
+          "Username is already taken.",
+          [{ text: "OK" }]
+        );
         setLoading(false);
         return;
       }
@@ -99,15 +87,16 @@ export default function SignUp({ navigation }) {
         email: email
       });
 
- 
-
-
       // Navigate to the verification screen
       navigation.navigate('VerifyEmail', { user });
 
     } catch (error) {
       console.log(error);
-      alert('There was an error while signing up: ' + error.message);
+      Alert.alert(
+        "Error",
+        'There was an error while signing up: ' + error.message,
+        [{ text: "OK" }]
+      );
     } finally {
       setLoading(false);
     }

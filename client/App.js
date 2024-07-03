@@ -26,6 +26,7 @@ import Login from './Components/Auth/Login';
 import Profile from './Components/Auth/Profile';
 import VerifyEmail from './Components/Auth/VerifyEmail';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FriendsLists from './Components/Auth/FriendsLists';
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 
@@ -181,6 +182,18 @@ const MainNavigator = () => (
         title: '',
       }}
     />
+
+<MainStack.Screen
+      name="FriendsList"
+      component={FriendsLists}
+      options={{
+        headerBackTitle: 'Back',
+        headerBackTitleStyle: {
+          fontFamily: 'ComicSerifPro',
+        },
+        title: '',
+      }}
+    />
   </MainStack.Navigator>
 );
 
@@ -257,21 +270,31 @@ export default function App() {
   const [isHapticEnabled, setIsHapticEnabled] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
 
-
+  // useEffect(()=> {
+  //   clearAsyncStorage();
+  // }, []);
 
 
   const checkLoginStatus = async () => {
     const storedUserId = await AsyncStorage.getItem('userId');
+    const storedUsername = await AsyncStorage.getItem('username');
+    const storedEmail = await AsyncStorage.getItem('email');
     if (storedUserId) {
-      login(storedUserId);
+      login(storedUserId, storedUsername, storedEmail);
     }
   };
 
-  const login = async (userId) => {
+  const login = async (userId, username, email) => {
     await AsyncStorage.setItem('userId', userId);
-    setIsLoggedIn(true);
+    await AsyncStorage.setItem('username', username);
+    await AsyncStorage.setItem('email', email);
     setUserId(userId);
+    setUsername(username);
+    setEmail(email);
+    setIsLoggedIn(true);
   };
 
   const clearAsyncStorage = async () => {
@@ -284,9 +307,13 @@ export default function App() {
 
   const logout = async () => {
     await AsyncStorage.removeItem('userId');
+    await AsyncStorage.removeItem('username');
+    await AsyncStorage.removeItem('email');
     await clearAsyncStorage();
     setIsLoggedIn(false);
     setUserId('');
+    setUsername('');
+    setEmail('');
   };
 
   const setAppGradient = async (newGradient) => {
@@ -381,7 +408,7 @@ export default function App() {
   }
 
   return (
-    <AuthProvider value={{ isLoggedIn, userId, login, logout }}>
+    <AuthProvider value={{ isLoggedIn, userId, username, email, login, logout }}>
       <HapticContext.Provider value={{ isHapticEnabled, setIsHapticEnabled }}>
         <GradientContext.Provider value={{ gradientColors, setAppGradient }}>
           <SoundContext.Provider value={{ isSoundMuted, setIsSoundMuted }}>

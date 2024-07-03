@@ -3,20 +3,18 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { FIREBASE_AUTH, FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
-import { getAuth, signOut } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import SoundContext from '../../Context/SoundContext';
 import GradientContext from "../../Context/GradientContext";
 import { scaledSize } from "../../Helper/ScalingHelper";
 import AuthContext from '../../Context/AuthContext';
 import ProfileActions from './ProfileActions';
 
-
 const { width, height } = Dimensions.get("window");
 
 export default function Profile({ navigation }) {
   const { isSoundMuted } = useContext(SoundContext);
   const { gradientColors } = useContext(GradientContext);
-  const { logout } = useContext(AuthContext);
   const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
@@ -31,23 +29,33 @@ export default function Profile({ navigation }) {
     fetchProfileData();
   }, []);
 
-
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <View style={styles.overlayContainer}>
-        <Text style={styles.titleText}>Profile</Text>
         {profileData ? (
           <View style={styles.profileContainer}>
             <Text style={styles.label}>Username:</Text>
             <Text style={styles.value}>{profileData.username}</Text>
             <Text style={styles.label}>Email:</Text>
             <Text style={styles.value}>{profileData.email}</Text>
+            
           </View>
         ) : (
-          <Text style={styles.loadingText}>Loading...</Text>
+          <View style={styles.profileContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
         )}
 
+
+<TouchableOpacity
+          style={styles.friendsListButton}
+          onPress={() => navigation.navigate('FriendsList')}
+        >
+          <Text style={styles.friendsListButtonText}>Friends List</Text>
+        </TouchableOpacity>
+
         <ProfileActions navigation={navigation} />
+
       </View>
     </LinearGradient>
   );
@@ -68,16 +76,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-  },
-  titleText: {
-    fontFamily: "ComicSerifPro",
-    fontSize: scaledSize(60),
-    marginBottom: scaledSize(40),
-    color: "#fff",
-    textShadowOffset: { width: scaledSize(2), height: scaledSize(2) },
-    textShadowRadius: scaledSize(3),
-    textShadowColor: "#333",
-    textAlign: "center",
   },
   profileContainer: {
     width: '80%',
@@ -105,18 +103,18 @@ const styles = StyleSheet.create({
     fontSize: scaledSize(24),
     color: "#fff",
   },
-  signOutButton: {
+  friendsListButton: {
     marginTop: scaledSize(20),
     padding: scaledSize(12),
     borderRadius: scaledSize(10),
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: scaledSize(1),
-    width: '40%',
+    width: '60%',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  signOutButtonText: {
+  friendsListButtonText: {
     fontFamily: 'ComicSerifPro',
     color: '#fff',
     fontSize: scaledSize(20),

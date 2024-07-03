@@ -1,14 +1,14 @@
 import React, { useEffect, useContext, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { FIREBASE_AUTH } from "../../Firebase/FirebaseConfig";
+import { FIREBASE_AUTH, FIRESTORE } from "../../Firebase/FirebaseConfig";
 import AuthContext from '../../Context/AuthContext';
 import { playButtonSound } from '../../Helper/AudioHelper';
 import { scaledSize } from "../../Helper/ScalingHelper";
 import SoundContext from '../../Context/SoundContext';
 import GradientContext from "../../Context/GradientContext";
-import Toast from 'react-native-toast-message';
 import { sendEmailVerification } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 const VerifyEmail = ({ route, navigation }) => {
   const { user } = route.params;
@@ -23,26 +23,10 @@ const VerifyEmail = ({ route, navigation }) => {
       try {
         await sendEmailVerification(user);
         setLastVerificationTime(new Date().getTime());
-        Toast.show({
-          type: 'success',
-          position: 'top',
-          visibilityTime: 2000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-          text2: "Verification email sent to " + user.email
-        });
+        Alert.alert("Success", "Verification email sent!");
       } catch (error) {
         console.log(error);
-        Toast.show({
-          type: 'errorTextSmall',
-          position: 'top',
-          visibilityTime: 2000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
-          text2: "Failed to send verification email."
-        });
+        Alert.alert("Error", "Failed to send verification email.");
       }
     };
 
@@ -52,52 +36,43 @@ const VerifyEmail = ({ route, navigation }) => {
       await user.reload();
       if (user.emailVerified) {
         clearInterval(interval);
-        login(user.uid);
+        fetchUserDetails(user.uid);
       }
     }, 5000); // Check every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
 
+  const fetchUserDetails = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(FIRESTORE, "users", userId));
+      if (userDoc.exists()) {
+        const { username, email } = userDoc.data();
+        login(userId, username, email);
+      } else {
+        console.error("User document does not exist.");
+        Alert.alert("Error", "User details not found. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error fetching user details: ", error);
+      Alert.alert("Error", "Failed to fetch user details.");
+    }
+  };
+
   const resendVerificationEmail = async () => {
     const currentTime = new Date().getTime();
     if (lastVerificationTime && (currentTime - lastVerificationTime < 60000)) {
-      Toast.show({
-        type: 'error',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Please wait before retrying."
-      });
+      Alert.alert("Error", "Please wait before retrying.");
       return;
     }
 
     try {
       await sendEmailVerification(user);
       setLastVerificationTime(currentTime);
-
-      Toast.show({
-        type: 'success',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Verification email resent!"
-      });
+      Alert.alert("Success", "Verification email resent!");
     } catch (error) {
       console.log(error);
-      Toast.show({
-        type: 'error',
-        position: 'top',
-        visibilityTime: 1000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-        text2: "Failed to resend verification email."
-      });
+      Alert.alert("Error", "Failed to resend verification email.");
     }
   };
 
@@ -105,7 +80,7 @@ const VerifyEmail = ({ route, navigation }) => {
     <LinearGradient colors={gradientColors} style={styles.container}>
       <View style={styles.overlayContainer}>
         <Text style={styles.titleText}>Verify Your Email</Text>
-        <Text style={styles.infoText}>A verification email has been sent to {user.email}. Please verify your email to continue. You will be automatically signed in once verified.</Text>
+        <Text style={styles.infoText}>A verification email has been sent to {user.email}!</Text>
         <ActivityIndicator size="large" color="#fff" style={styles.activityIndicator} />
         
         <TouchableOpacity
@@ -114,8 +89,6 @@ const VerifyEmail = ({ route, navigation }) => {
         >
           <Text style={styles.buttonText}>Resend Verification Email</Text>
         </TouchableOpacity>
-
-       
       </View>
     </LinearGradient>
   );

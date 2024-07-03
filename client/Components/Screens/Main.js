@@ -35,18 +35,29 @@ export default function Main({ navigation }) {
         <Text style={styles.titleText}>Word Twirl</Text>
 
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {navigation.navigate("Start Screen", {type:true}); playButtonSound(isSoundMuted)}}
-          >
-            <BlurView intensity={50} tint="light" style={styles.glassButton}>
-              <View style = {styles.iconWrapper}>      
-            <FontAwesome name="clock-o" size={scaledSize(38)} color="#fff" />
-              </View>
+        <TouchableOpacity
+  style={styles.button}
+  onPress={() => { navigation.navigate("Start Screen", { multiplayer: false }); playButtonSound(isSoundMuted) }}
+>
+  <BlurView intensity={50} tint="light" style={styles.glassButton}>
+    <View style={styles.iconWrapper}>
+      <FontAwesome name="gamepad" size={scaledSize(38)} color="#fff" />
+    </View>
+    <Text style={styles.buttonText}>Classic</Text>
+  </BlurView>
+</TouchableOpacity>
+    <TouchableOpacity
+      style={styles.button}
+      onPress={() => { navigation.navigate("Start Screen", { multiplayer: true }); playButtonSound(isSoundMuted) }}
+    >
+      <BlurView intensity={50} tint="light" style={styles.glassButton}>
+        <View style={styles.iconWrapper}>
+          <FontAwesome name="globe" size={scaledSize(38)} color="#fff" /> 
+        </View>
+        <Text style={styles.buttonText}>Multiplayer</Text>
+      </BlurView>
+    </TouchableOpacity>
 
-              <Text style={styles.buttonText}>Start</Text>
-            </BlurView>
-          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.button}
@@ -198,7 +209,8 @@ export const styles = StyleSheet.create({
     borderWidth: scaledSize(1),
     alignItems: "center",
     justifyContent: "center",
-    flexDirection:'row'
+    flexDirection:'row',
+    boxShadow: 'rgb(51, 51, 51) 0px 0px 0px 3px;'
   },
   buttonText: {
     fontFamily: "ComicSerifPro",
