@@ -240,6 +240,9 @@ export default function Game({ route, navigation }) {
 
   useEffect(() => {
     if (!hasRun.current && letters && Array.isArray(letters) && letters.length > 0 && Array.isArray(letters[0])) {
+      if (isGuest && !hasRecievedLetters.current && isMultiplayer) {
+        return;
+      }
       var trie = new Trie();
       for (const letter in wordsMap) {
         if (wordsMap.hasOwnProperty(letter)) {
