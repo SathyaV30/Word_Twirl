@@ -41,11 +41,11 @@ io.on('connection', (socket) => {
     socket.to(room).emit('message', { user: 'admin', text: `${username} has joined the room.` });
   });
 
-  socket.on('gameRequest', ({ opponentId, room, requester }) => {
+  socket.on('gameRequest', ({ opponentId, room, requester, map, time }) => {
     console.log(`Game request from ${requester} to ${opponentId} for room ${room}`);
     const opponentSocketId = users[opponentId]?.socketId;
     if (opponentSocketId) {
-      io.to(opponentSocketId).emit('gameRequest', { room, requester });
+      io.to(opponentSocketId).emit('gameRequest', { room, requester, map, time });
     } else {
       console.log('Opponent not found or not connected');
     }

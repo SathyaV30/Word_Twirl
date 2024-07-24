@@ -23,7 +23,7 @@ export default function PostGameMultiplayer({ route, navigation }) {
   const [waitingForOpponent, setWaitingForOpponent] = useState(true);
   const [sortedAllWords, setSortedAllWords] = useState([]);
 
-  useEffect(()=> {
+  useEffect(() => {
     console.log(opponentFoundWords)
   }, [opponentFoundWords])
 

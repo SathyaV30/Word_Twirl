@@ -42,8 +42,11 @@ export default function StartScreen({ navigation, route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [friends, setFriends] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
-  const [viewMode, setViewMode] = useState('selectOpponent'); // 'selectOpponent' or 'gameRequests'
+  const [sentRequests, setSentRequests] = useState(0);
+  const [viewMode, setViewMode] = useState('selectOpponent'); 
   const isGuestRef = useRef(false);
+  const MAX_REQUESTS = 3;
+
 
 
   useEffect(()=> {
@@ -143,9 +146,10 @@ export default function StartScreen({ navigation, route }) {
 
   useEffect(() => {
     if (multiplayer) {
-      socket.on('gameRequest', ({ room, requester }) => {
+      socket.on('gameRequest', ({ room, requester, map, time }) => {
+        console.log('Map:', map, 'Time:', time);
         console.log('Incoming game request:', { room, requester });
-        setIncomingRequests(prevRequests => [...prevRequests, { room, requester }]);
+        setIncomingRequests(prevRequests => [...prevRequests, { room, requester, map, time }]);
       });
   
       socket.on('gameAccepted', ({ room }) => {
@@ -179,15 +183,15 @@ export default function StartScreen({ navigation, route }) {
   }
 
   function startGame() {
-    if (selectedMap === null && selectedTime === null) {
+    if (!selectedMap && !selectedTime ) {
       Alert.alert("", "Please select a board and a time limit");
       return;
     } 
-    if (selectedMap === null) {
+    if (!selectedMap && selectedMap !== 0) {
       Alert.alert("", "Please select a board");
       return;
     } 
-    if (selectedTime === null) {
+    if (!selectedTime) {
       Alert.alert("", "Please select a time limit");
       return;
     }
@@ -204,7 +208,8 @@ export default function StartScreen({ navigation, route }) {
 
       if (friend) {
         console.log('Sending game request:', { opponentId: friend.id, room:room, requester: username });
-        socket.emit('gameRequest', { opponentId: friend.id, room, requester: username });
+        
+        socket.emit('gameRequest', { opponentId: friend.id, room, requester: username, map: selectedMap, time: selectedTime });
         Alert.alert("", "Game request sent! You will be automatically navigated to the game once your opponent accepts.");
       } else {
         console.error('Opponent not found:', opponent);
@@ -236,16 +241,18 @@ export default function StartScreen({ navigation, route }) {
     });
   }
 
-  function renderShape(idx) {
+  function renderShape(idx, inputParamSize) {
     const matrixSize = (idx === 0 ? 4 : idx == 1 || idx == 2 || idx == 3 ? 5 : 6); // 4x4, 5x5, 6x6
-    const cellSizeTemp = ((120) - matrixSize * 4) / matrixSize; 
+    const cellSizeTemp = ((inputParamSize) - matrixSize * 4) / matrixSize; 
     const cellSize = scaledSize(cellSizeTemp);
     const cellStyle = {
       width: cellSize,
       height: cellSize,
-      margin: 2,
+      margin:2,
       backgroundColor: 'gray'
     };
+
+
     const isCircleMap = (row, col) => {
       // Removing corners for circle map
       if (idx === 2) {
@@ -273,7 +280,7 @@ export default function StartScreen({ navigation, route }) {
     };
 
     return (
-      <View style={{ flexDirection: 'column', width: scaledSize(120), height: scaledSize(120), marginRight: scaledSize(30), opacity: selectedMap === idx ? 0.5 : 1 }}>
+      <View style={{ flexDirection: 'column', width: scaledSize(inputParamSize), height: scaledSize(inputParamSize), marginRight: scaledSize(inputParamSize/4), opacity: selectedMap === idx ? 0.5 : 1 }}>
         {Array(matrixSize).fill(null).map((_, row) => (
           <View style={{ flexDirection: 'row' }} key={row}>
             {Array(matrixSize).fill(null).map((_, col) => 
@@ -347,12 +354,16 @@ export default function StartScreen({ navigation, route }) {
                   renderItem={({ item }) => (
                     <View style={styles.modalItem}>
                       <Text style={styles.modalItemText}>{item.requester}</Text>
+                      <View style={styles.mapPreviewContainer}>
+                        {renderShape(item.map, 85)}
+                        <Text style={styles.mapPreviewText}>{item.time}</Text>
+                      </View>
                       <View style={styles.requestButtonsContainer}>
                         <TouchableOpacity
                           style={styles.acceptButton}
                           onPress={() => acceptGameRequest(item.room)}
                         >
-                          <Text style={styles.requestButtonText}>Accept</Text>
+                         <FontAwesome name="check" size={scaledSize(16)} color="white" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.declineButton}
@@ -361,7 +372,7 @@ export default function StartScreen({ navigation, route }) {
                             setIncomingRequests(prevRequests => prevRequests.filter(req => req.room !== item.room));
                           }}
                         >
-                          <Text style={styles.requestButtonText}>Decline</Text>
+                          <FontAwesome name="times" size={scaledSize(16)} color="white" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -388,7 +399,7 @@ export default function StartScreen({ navigation, route }) {
         <ScrollView horizontal={true} style={styles.imageScroll} contentContainerStyle={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           {availableMaps.map(map => (
             <TouchableOpacity key={map.idx} onPress={() => { setSelectedMap(selectedMap === map.idx ? null : map.idx); playButtonSound(isSoundMuted); }}>
-              {renderShape(map.idx)}
+              {renderShape(map.idx, 120)}
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -583,5 +594,15 @@ const styles = StyleSheet.create({
     fontFamily: 'ComicSerifPro',
     fontSize: scaledSize(18),
     color: 'white',
+  },
+  mapPreviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapPreviewText: {
+    fontFamily: 'ComicSerifPro',
+    fontSize: scaledSize(14),
+    color: 'gray',
   },
 });
