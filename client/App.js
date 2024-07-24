@@ -27,6 +27,7 @@ import Profile from './Components/Auth/Profile';
 import VerifyEmail from './Components/Auth/VerifyEmail';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FriendsLists from './Components/Auth/FriendsLists';
+import PostGameMultiplayer from './Components/Game/PostGameMultiplayer';
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 
@@ -152,6 +153,17 @@ const MainNavigator = () => (
     <MainStack.Screen
       name="PostGame"
       component={PostGame}
+      options={{
+        headerBackTitle: 'Back',
+        headerBackTitleStyle: {
+          fontFamily: 'ComicSerifPro',
+        },
+        title: '',
+      }}
+    />
+       <MainStack.Screen
+      name="PostGameMultiplayer"
+      component={PostGameMultiplayer}
       options={{
         headerBackTitle: 'Back',
         headerBackTitleStyle: {

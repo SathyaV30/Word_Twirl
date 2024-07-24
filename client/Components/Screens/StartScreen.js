@@ -12,11 +12,12 @@ import { scaledSize } from '../../Helper/ScalingHelper';
 import AuthContext from '../../Context/AuthContext';
 import { getDocs, collection } from 'firebase/firestore';
 import { FIRESTORE } from "../../Firebase/FirebaseConfig";
-import io from 'socket.io-client';
 import { FontAwesome } from '@expo/vector-icons';
+import socket from '../../Helper/Socket';
 
 // Connect to your server
-const socket = io('http://localhost:3000');
+
+
 
 export default function StartScreen({ navigation, route }) {
   const { multiplayer } = route.params;
@@ -25,11 +26,14 @@ export default function StartScreen({ navigation, route }) {
   const selectedMapRef = useRef(selectedMap);
   const selectedTimeRef = useRef(selectedTime);
 
+
   const { isSoundMuted } = useContext(SoundContext);
   const { gradientColors } = useContext(GradientContext);
   const { userId, username } = useContext(AuthContext);
   const [unlockedMapIds, setUnlockedMapIds] = useState([]);
   const [opponent, setOpponent] = useState('');
+  const [opponentId, setOpponentId] = useState('');
+  const selectedOpponentIdRef = useRef(opponentId);
   const [userStats, setUserStats] = useState({
     score: 0,
     gamesPlayed: 0,
@@ -39,7 +43,18 @@ export default function StartScreen({ navigation, route }) {
   const [friends, setFriends] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [viewMode, setViewMode] = useState('selectOpponent'); // 'selectOpponent' or 'gameRequests'
-  const [outgoingRequests, setOutgoingRequests] = useState(new Set());
+  const isGuestRef = useRef(false);
+
+
+  useEffect(()=> {
+    console.log(opponent);
+    const friend = friends.find(friend => friend.username === opponent);
+    if (friend) {
+      setOpponentId(friend.id);
+    } else {
+      setOpponentId('');
+    }
+  }, [opponent])
 
   const availableMaps = MAP_OPTIONS.filter(mapOption => {
     if (unlockedMapIds.includes(mapOption.idx)) {
@@ -72,15 +87,13 @@ export default function StartScreen({ navigation, route }) {
       const totalGamesPlayed = allStats.reduce((total, stat) => total + stat.gamesPlayed, 0);
       const allWords = await getAllWordsUserFound(userId);
       const maxWordLength = [...allWords].reduce((max, word) => Math.max(max, word.length), 0);
-      
       setUserStats({
         score: totalScore,
         gamesPlayed: totalGamesPlayed,
         maxWordLength
       });
-      
       setUnlockedMapIds(unlockedMaps);
-    }
+    } 
   
     fetchUserStats();
   }, []);
@@ -95,6 +108,14 @@ export default function StartScreen({ navigation, route }) {
     console.log(selectedTime);
     selectedTimeRef.current = selectedTime ? selectedTime : selectedTimeRef.current;
   }, [selectedTime])
+
+
+  useEffect(()=> {
+    console.log(opponentId);
+    selectedOpponentIdRef.current = opponentId ? opponentId : selectedOpponentIdRef.current;
+  }, [opponentId])
+
+  
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -114,6 +135,12 @@ export default function StartScreen({ navigation, route }) {
     }
   }, [userId, username]);
 
+  function leaveRoom(room) {
+    console.log('Leaving room:', room);
+    socket.emit('leaveRoom', { room, username });
+  }
+  
+
   useEffect(() => {
     if (multiplayer) {
       socket.on('gameRequest', ({ room, requester }) => {
@@ -123,7 +150,8 @@ export default function StartScreen({ navigation, route }) {
   
       socket.on('gameAccepted', ({ room }) => {
         console.log('Game accepted, navigating to game:', room);
-        navigateToGame(room)
+        leaveRoom(room); // Leave the room before navigating to the game (we rejoin in the game component)
+        navigateToGame(room);
       });
   
       socket.on('requestFailed', ({ message }) => {
@@ -175,7 +203,7 @@ export default function StartScreen({ navigation, route }) {
       const friend = friends.find(friend => friend.username === opponent);
 
       if (friend) {
-        console.log('Sending game request:', { opponentId: friend.id, room, requester: username });
+        console.log('Sending game request:', { opponentId: friend.id, room:room, requester: username });
         socket.emit('gameRequest', { opponentId: friend.id, room, requester: username });
         Alert.alert("", "Game request sent! You will be automatically navigated to the game once your opponent accepts.");
       } else {
@@ -187,12 +215,11 @@ export default function StartScreen({ navigation, route }) {
   }
 
   function acceptGameRequest(room) {
+    isGuestRef.current = true;
     socket.emit('acceptGame', { room });
   }
-
+   
   function navigateToGame(room) {
-    console.log('selectedTime' + selectedTime.current);
-    console.log('selectedMap' + selectedMap.current);
     navigation.reset({
       index: 0,
       routes: [{
@@ -201,7 +228,9 @@ export default function StartScreen({ navigation, route }) {
           selectedMapIndex: selectedMapRef.current,
           selectedTime: selectedTimeRef.current,
           room: room,
-
+          isGuest: isGuestRef.current,
+          opponentId: selectedOpponentIdRef.current,
+          isMultiplayer: multiplayer
         }
       }],
     });
