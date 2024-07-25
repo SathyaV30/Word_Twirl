@@ -83,7 +83,7 @@ export default function Game({ route, navigation }) {
   const [visited, setVisited] = useState(new Set());
   const [viewPosition, setViewPosition] = useState({ x: 0, y: 0 });
   const [submitString, setSubmitString] = useState('');
-  const { selectedMapIndex, selectedTime, isGuest, isMultiplayer, room, opponentId } = route.params;
+  const { selectedMapIndex, selectedTime, isGuest, isMultiplayer, room, opponentId, opponent} = route.params;
   const [time, setTime] = useState(parseInt(selectedTime.split(' ')[0]) * 60);
   const [letters, setLetters] = useState([]);
   const [highlightedCells, setHighlightedCells] = useState([]);
@@ -364,6 +364,7 @@ export default function Game({ route, navigation }) {
     const totalLength = words.reduce((acc, word) => acc + word.length, 0);
     const numberOfWords = words.length;
     const averageWordLength = numberOfWords > 0 ? totalLength / numberOfWords : 0;
+
     await updateAccuracy(userId, selectedTime, attempts, posAttempts);
     await updateTotalAvgLenForTime(userId, selectedTime, averageWordLength);
     await updateTotalScoreForTime(userId, selectedTime, score);
@@ -373,7 +374,7 @@ export default function Game({ route, navigation }) {
     await checkAndUnlockMaps(userId);
   
     if (isMultiplayer) {
-      socket.emit('postGameData', { room, foundWords: words, userScore: score });
+      socket.emit('postGameData', { room, foundWords: words });
       leaveRoom(room);
   
       // Navigate to PostGame for multiplayer
@@ -390,6 +391,10 @@ export default function Game({ route, navigation }) {
               wordsToPath: wordsToPath,
               letters: letters,
               room: room,
+              opponent: opponent,
+              attempts: attempts,
+              posAttempts: posAttempts,
+              averageWordLength: averageWordLength,
             },
           },
         ],
@@ -408,6 +413,9 @@ export default function Game({ route, navigation }) {
               selectedTime: selectedTime,
               wordsToPath: wordsToPath,
               letters: letters,
+                            attempts: attempts,
+              posAttempts: posAttempts,
+              averageWordLength: averageWordLength,
             },
           },
         ],

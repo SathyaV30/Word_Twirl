@@ -8,11 +8,11 @@ const io = socketIo(server);
 
 const users = {};
 const gameData = {};
+const gameRequests = {}; // Store game requests with room as key and requester's socket ID as value
 
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
-
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
@@ -45,19 +45,20 @@ io.on('connection', (socket) => {
     console.log(`Game request from ${requester} to ${opponentId} for room ${room}`);
     const opponentSocketId = users[opponentId]?.socketId;
     if (opponentSocketId) {
+      gameRequests[room] = socket.id; // Store the requester's socket ID
       io.to(opponentSocketId).emit('gameRequest', { room, requester, map, time });
     } else {
       console.log('Opponent not found or not connected');
     }
   });
 
-  socket.on('postGameData', ({ room, foundWords, userScore }) => {
+  socket.on('postGameData', ({ room, foundWords }) => {
     if (!gameData[room]) {
       gameData[room] = {};
     }
 
     console.log('This is the room:', room);
-    gameData[room][socket.id] = { foundWords, userScore };
+    gameData[room][socket.id] = { foundWords };
 
     const roomClients = io.sockets.adapter.rooms.get(room) || new Set();
 
@@ -96,7 +97,12 @@ io.on('connection', (socket) => {
     console.log(`User joined room: ${room}`);
   });
 
-  socket.on('declineGame', ({ room }) => {
+  socket.on('declineGame', ({ room, guestUsername }) => {
+    const requesterSocketId = gameRequests[room];
+    if (requesterSocketId) {
+      io.to(requesterSocketId).emit('gameRequestDeclined', { room, guestUsername });
+      delete gameRequests[room]; // Clean up the stored request
+    }
     console.log(`Game request declined for room: ${room}`);
   });
 
@@ -119,6 +125,13 @@ io.on('connection', (socket) => {
     for (const room in gameData) {
       if (gameData[room][socket.id]) {
         delete gameData[room][socket.id];
+      }
+    }
+
+    // Clean up game requests
+    for (const room in gameRequests) {
+      if (gameRequests[room] === socket.id) {
+        delete gameRequests[room];
       }
     }
 

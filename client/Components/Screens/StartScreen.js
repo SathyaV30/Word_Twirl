@@ -15,7 +15,6 @@ import { FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { FontAwesome } from '@expo/vector-icons';
 import socket from '../../Helper/Socket';
 
-// Connect to your server
 
 
 
@@ -33,7 +32,8 @@ export default function StartScreen({ navigation, route }) {
   const [unlockedMapIds, setUnlockedMapIds] = useState([]);
   const [opponent, setOpponent] = useState('');
   const [opponentId, setOpponentId] = useState('');
-  const selectedOpponentIdRef = useRef(opponentId);
+  const opponentIdRef = useRef(opponentId);
+  const opponentNameRef = useRef(opponent);
   const [userStats, setUserStats] = useState({
     score: 0,
     gamesPlayed: 0,
@@ -42,10 +42,11 @@ export default function StartScreen({ navigation, route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [friends, setFriends] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
-  const [sentRequests, setSentRequests] = useState(0);
+  const [sentRequests, setSentRequests] = useState(new Set());
   const [viewMode, setViewMode] = useState('selectOpponent'); 
   const isGuestRef = useRef(false);
   const MAX_REQUESTS = 3;
+  
 
 
 
@@ -115,8 +116,14 @@ export default function StartScreen({ navigation, route }) {
 
   useEffect(()=> {
     console.log(opponentId);
-    selectedOpponentIdRef.current = opponentId ? opponentId : selectedOpponentIdRef.current;
+    opponentIdRef.current = opponentId ? opponentId : opponentIdRef.current;
+    
   }, [opponentId])
+
+  useEffect(() => {
+    console.log(opponent);
+    opponentNameRef.current = opponent ? opponent : opponentNameRef.current;
+  }, [opponent])
 
   
 
@@ -144,38 +151,48 @@ export default function StartScreen({ navigation, route }) {
   }
   
 
-  useEffect(() => {
-    if (multiplayer) {
-      socket.on('gameRequest', ({ room, requester, map, time }) => {
-        console.log('Map:', map, 'Time:', time);
-        console.log('Incoming game request:', { room, requester });
-        setIncomingRequests(prevRequests => [...prevRequests, { room, requester, map, time }]);
-      });
-  
-      socket.on('gameAccepted', ({ room }) => {
-        console.log('Game accepted, navigating to game:', room);
-        leaveRoom(room); // Leave the room before navigating to the game (we rejoin in the game component)
-        navigateToGame(room);
-      });
-  
-      socket.on('requestFailed', ({ message }) => {
-        Alert.alert('Game Request Failed', message);
-      });
+useEffect(() => {
+  if (multiplayer) {
+    socket.on('gameRequest', ({ room, requester, map, time }) => {
+      console.log('Map:', map, 'Time:', time);
+      console.log('Incoming game request:', { room, requester });
+      setIncomingRequests(prevRequests => [...prevRequests, { room, requester, map, time }]);
+    });
 
-  
-      socket.on('gameRequestExpired', ({ room }) => {
-        Alert.alert('Game Request Expired', 'The game request has expired.');
-        setIncomingRequests(prevRequests => prevRequests.filter(req => req.room !== room));
+    socket.on('gameAccepted', ({ room }) => {
+      console.log('Game accepted, navigating to game:', room);
+      leaveRoom(room); // Leave the room before navigating to the game (we rejoin in the game component)
+      navigateToGame(room);
+    });
+
+    socket.on('requestFailed', ({ message }) => {
+      Alert.alert('Game Request Failed', message);
+    });
+
+    socket.on('gameRequestDeclined', ({ room, guestUsername }) => {
+      Alert.alert('Game Request Declined', `${guestUsername} has declined your game request.`);
+      setSentRequests(sentRequests => {
+        const updatedRequests = new Set(sentRequests);
+        updatedRequests.delete(guestUsername);
+        return updatedRequests;
       });
-  
-      return () => {
-        socket.off('gameRequest');
-        socket.off('gameAccepted');
-        socket.off('requestFailed');
-        socket.off('gameRequestExpired');
-      };
-    }
-  }, [multiplayer]);
+    });
+
+    socket.on('gameRequestExpired', ({ room }) => {
+      Alert.alert('Game Request Expired', 'The game request has expired.');
+      setIncomingRequests(prevRequests => prevRequests.filter(req => req.room !== room));
+    });
+
+    return () => {
+      socket.off('gameRequest');
+      socket.off('gameAccepted');
+      socket.off('requestFailed');
+      socket.off('gameRequestDeclined');
+      socket.off('gameRequestExpired');
+    };
+  }
+}, [multiplayer]);
+
 
 
   function chooseOpponent() {
@@ -207,8 +224,18 @@ export default function StartScreen({ navigation, route }) {
       const friend = friends.find(friend => friend.username === opponent);
 
       if (friend) {
-        console.log('Sending game request:', { opponentId: friend.id, room:room, requester: username });
         
+        console.log('Sending game request:', { opponentId: friend.id, room:room, requester: username });
+        if (sentRequests.size >= MAX_REQUESTS) {
+          Alert.alert("", "You can only send 3 game requests at a time. Please wait for a response before sending another request.");
+          return;
+        }
+        if (sentRequests.has(friend.username)) {
+          Alert.alert("", "You have already sent a game request to this user. Please wait for a response before sending another request.");
+          return; 
+        }
+        sentRequests.add(friend.username);
+       
         socket.emit('gameRequest', { opponentId: friend.id, room, requester: username, map: selectedMap, time: selectedTime });
         Alert.alert("", "Game request sent! You will be automatically navigated to the game once your opponent accepts.");
       } else {
@@ -219,12 +246,14 @@ export default function StartScreen({ navigation, route }) {
     }
   }
 
-  function acceptGameRequest(room) {
+  function acceptGameRequest(room, hostUser) {
     isGuestRef.current = true;
+    opponentNameRef.current = hostUser;    
     socket.emit('acceptGame', { room });
   }
    
   function navigateToGame(room) {
+    console.log('This is the oppoenent:', opponentNameRef);
     navigation.reset({
       index: 0,
       routes: [{
@@ -234,14 +263,15 @@ export default function StartScreen({ navigation, route }) {
           selectedTime: selectedTimeRef.current,
           room: room,
           isGuest: isGuestRef.current,
-          opponentId: selectedOpponentIdRef.current,
-          isMultiplayer: multiplayer
+          opponentId: opponentIdRef.current,
+          isMultiplayer: multiplayer,
+          opponent: opponentNameRef.current
         }
       }],
     });
   }
 
-  function renderShape(idx, inputParamSize) {
+  function renderShape(idx, inputParamSize, wantMargin) {
     const matrixSize = (idx === 0 ? 4 : idx == 1 || idx == 2 || idx == 3 ? 5 : 6); // 4x4, 5x5, 6x6
     const cellSizeTemp = ((inputParamSize) - matrixSize * 4) / matrixSize; 
     const cellSize = scaledSize(cellSizeTemp);
@@ -280,7 +310,7 @@ export default function StartScreen({ navigation, route }) {
     };
 
     return (
-      <View style={{ flexDirection: 'column', width: scaledSize(inputParamSize), height: scaledSize(inputParamSize), marginRight: scaledSize(inputParamSize/4), opacity: selectedMap === idx ? 0.5 : 1 }}>
+      <View style={{ flexDirection: 'column', width: scaledSize(inputParamSize), height: scaledSize(inputParamSize), marginRight: wantMargin ? scaledSize(inputParamSize/4) : 0, opacity: selectedMap === idx ? 0.5 : 1 }}>
         {Array(matrixSize).fill(null).map((_, row) => (
           <View style={{ flexDirection: 'row' }} key={row}>
             {Array(matrixSize).fill(null).map((_, col) => 
@@ -355,20 +385,20 @@ export default function StartScreen({ navigation, route }) {
                     <View style={styles.modalItem}>
                       <Text style={styles.modalItemText}>{item.requester}</Text>
                       <View style={styles.mapPreviewContainer}>
-                        {renderShape(item.map, 85)}
+                        {renderShape(item.map, 85, false)}
                         <Text style={styles.mapPreviewText}>{item.time}</Text>
                       </View>
                       <View style={styles.requestButtonsContainer}>
                         <TouchableOpacity
                           style={styles.acceptButton}
-                          onPress={() => acceptGameRequest(item.room)}
+                          onPress={() => acceptGameRequest(item.room, item.requester)}
                         >
                          <FontAwesome name="check" size={scaledSize(16)} color="white" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.declineButton}
                           onPress={() => {
-                            socket.emit('declineGame', { room: item.room });
+                            socket.emit('declineGame', { room: item.room, guestUsername: username });
                             setIncomingRequests(prevRequests => prevRequests.filter(req => req.room !== item.room));
                           }}
                         >
@@ -399,7 +429,7 @@ export default function StartScreen({ navigation, route }) {
         <ScrollView horizontal={true} style={styles.imageScroll} contentContainerStyle={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           {availableMaps.map(map => (
             <TouchableOpacity key={map.idx} onPress={() => { setSelectedMap(selectedMap === map.idx ? null : map.idx); playButtonSound(isSoundMuted); }}>
-              {renderShape(map.idx, 120)}
+              {renderShape(map.idx, 120, true)}
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -552,7 +582,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     display:'flex',
     flexDirection:'row',
-    gap: scaledSize(4)
+    gap: scaledSize(4),
   },
   modalItemText: {
     fontFamily: 'ComicSerifPro',
@@ -567,7 +597,7 @@ const styles = StyleSheet.create({
   requestButtonsContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
-    marginTop: scaledSize(10),
+    alignSelf: 'center',
   },
   acceptButton: {
     backgroundColor: 'green',
