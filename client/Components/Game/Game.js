@@ -67,7 +67,7 @@ import { calcScore } from './GameFunctions';
 import { generateLetters } from './GameFunctions';
 import io from 'socket.io-client';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import socket from '../../Helper/Socket';
+import socket from '../../Helper/SocketHelper';
 const windowHeight = Dimensions.get('window').height;
 
 const interstitial = InterstitialAd.createForAdRequest(adUnitIdInterstitial, {

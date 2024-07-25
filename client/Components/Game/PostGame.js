@@ -10,6 +10,8 @@ import { RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads'
 import { updateHighScoreIfNeeded, updateTotalScoreForTime } from '../../Helper/StorageHelper';
 import { scaledSize } from '../../Helper/ScalingHelper';
 import { adUnitIdRewarded } from '../../Helper/AdHelper';
+import { getPerformanceLevel, accuracyCutoffs, wordsFoundCutoffs, averageWordLengthCutoffs } from '../../Helper/PerformanceHelper';
+
 import Swiper from 'react-native-swiper';
 
 const rewardedAdv = RewardedAd.createForAdRequest(adUnitIdRewarded, {
@@ -25,7 +27,6 @@ export default function PostGame({ route, navigation }) {
     const [rewarded, setRewarded] = useState(false);
     const [adLoadingText, setAdLoadingText] = useState('Watch a short video for double score?');
 
-    // New state for AccuracyWheel and WordsFoundWheel
     const [displayMode, setDisplayMode] = useState('accuracy');
     const [wordsDisplayMode, setWordsDisplayMode] = useState('wordsFoundRatio');
     const accuracy = (posAttempts / attempts) * 100;
@@ -35,6 +36,7 @@ export default function PostGame({ route, navigation }) {
     const wordsFillAnimation = useRef(new Animated.Value(0)).current;
     const wordsFlipAnimation = useRef(new Animated.Value(0)).current;
     const animatedWordLength = useRef(new Animated.Value(0)).current;
+    const lineAnimation = useRef(new Animated.Value(-90)).current;
 
     useEffect(() => {
         const unsubscribeLoaded = rewardedAdv.addAdEventListener(RewardedAdEventType.LOADED, () => {
@@ -64,6 +66,12 @@ export default function PostGame({ route, navigation }) {
 
         Animated.timing(animatedWordLength, {
             toValue: averageWordLength,
+            duration: 1500,
+            useNativeDriver: false,
+        }).start();
+
+        Animated.timing(lineAnimation, {
+            toValue: (averageWordLength / 10) * 180 - 90,
             duration: 1500,
             useNativeDriver: false,
         }).start();
@@ -113,44 +121,6 @@ export default function PostGame({ route, navigation }) {
     });
     const sortedFoundWords = sortedFoundWordsTemp.map(word => word.toLowerCase());
 
-    // Determine performance level based on accuracy, words found ratio, and average word length
-    const getPerformanceLevel = (metric, cutoffs) => {
-        let level = 'Novice';
-        if (metric >= cutoffs.expert) {
-            level = 'Expert';
-        } else if (metric >= cutoffs.advanced) {
-            level = 'Advanced';
-        } else if (metric >= cutoffs.intermediate) {
-            level = 'Intermediate';
-        } else if (metric >= cutoffs.beginner) {
-            level = 'Beginner';
-        } else {
-            level = 'Novice';
-        }
-        return level;
-    };
-
-    const accuracyCutoffs = {
-        novice: 40,
-        beginner: 60,
-        intermediate: 75,
-        advanced: 90,
-        expert: 91,
-    };
-
-    const wordsFoundCutoffs = {
-        '1 min': { novice: 3, beginner: 6, intermediate: 10, advanced: 15, expert: 20 },
-        '3 min': { novice: 5, beginner: 10, intermediate: 15, advanced: 20, expert: 25 },
-        '5 min': { novice: 8, beginner: 13, intermediate: 18, advanced: 23, expert: 30 },
-    };
-
-    const averageWordLengthCutoffs = {
-        novice: 3,
-        beginner: 3.5,
-        intermediate: 4,
-        advanced: 5,
-        expert: 6,
-    };
 
     const timeLimit = selectedTime.toString();
     const currentWordsFoundCutoffs = wordsFoundCutoffs[timeLimit];
@@ -219,7 +189,7 @@ export default function PostGame({ route, navigation }) {
                                             fill={fillAnimation}
                                             tintColor='#4BB543'
                                             backgroundColor="#3d5875"
-                                            rotation={0} 
+                                            rotation={0}
                                         >
                                             {(fill) => (
                                                 <Animated.View
@@ -253,7 +223,7 @@ export default function PostGame({ route, navigation }) {
                                             fill={wordsFillAnimation}
                                             tintColor='#FFA500'
                                             backgroundColor="#3d5875"
-                                            rotation={0} 
+                                            rotation={0}
                                         >
                                             {(fill) => (
                                                 <Animated.View
@@ -280,13 +250,38 @@ export default function PostGame({ route, navigation }) {
                                 </View>
                             </View>
                             <View style={styles.wordLengthContainer}>
-                                <Text style={styles.wordLengthLabel}>Average Word Length</Text>
-                                <Animated.Text style={styles.wordLength}>
-                                    {animatedWordLength.interpolate({
-                                        inputRange: [0, averageWordLength],
-                                        outputRange: [0, averageWordLength.toFixed(2)]
-                                    }).toString()}
-                                </Animated.Text>
+                                <Text style={styles.wordLengthLabel}>Average Word Length: {averageWordLength.toFixed(2)}</Text>
+                                <View style={styles.speedometer}>
+                                    <LinearGradient
+                                        colors={['red', 'yellow', 'green']}
+                                        start={{ x: 0, y: 1 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={styles.gradient}
+                                    />
+                                    <View style={styles.needleContainer}>
+                                        <Animated.View
+                                            style={[
+                                                styles.needle,
+                                                {
+                                                    transform: [
+                                                        {
+                                                            rotate: lineAnimation.interpolate({
+                                                                inputRange: [-90, 90],
+                                                                outputRange: ['-90deg', '90deg'],
+                                                                extrapolate: 'clamp'
+                                                            })
+                                                        }
+                                                    ]
+                                                }
+                                            ]}
+                                        />
+                                    </View>
+                                    <View style={styles.speedometerLabels}>
+                                        {Object.entries(averageWordLengthCutoffs).map(([level, cutoff], index) => (
+                                            <Text key={index} style={styles.speedometerLabel}>{cutoff}</Text>
+                                        ))}
+                                    </View>
+                                </View>
                             </View>
                         </View>
                         <View style={styles.slide}>
@@ -411,6 +406,44 @@ const styles = StyleSheet.create({
     },
     wordLength: {
         fontSize: scaledSize(48),
+        color: '#fff',
+        fontFamily: 'ComicSerifPro',
+    },
+    speedometer: {
+        width: 200,
+        height: 100,
+        position: 'relative',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    gradient: {
+        width: '100%',
+        height: 20,
+        borderRadius: 10,
+    },
+    needleContainer: {
+        position: 'absolute',
+        top: 0,
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+    },
+    needle: {
+        width: 2,
+        height: 40,
+        backgroundColor: 'black',
+        position: 'absolute',
+        top: '10%',
+    },
+    speedometerLabels: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    speedometerLabel: {
+        fontSize: scaledSize(14),
         color: '#fff',
         fontFamily: 'ComicSerifPro',
     },

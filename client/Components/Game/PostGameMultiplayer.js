@@ -10,7 +10,7 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { scaledSize } from '../../Helper/ScalingHelper';
 import { adUnitIdBanner } from '../../Helper/AdHelper';
 import io from 'socket.io-client';
-import socket from '../../Helper/Socket';
+import socket from '../../Helper/SocketHelper';
 
 export default function PostGameMultiplayer({ route, navigation }) {
   const { isSoundMuted } = useContext(SoundContext);

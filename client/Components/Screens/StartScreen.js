@@ -13,7 +13,7 @@ import AuthContext from '../../Context/AuthContext';
 import { getDocs, collection } from 'firebase/firestore';
 import { FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { FontAwesome } from '@expo/vector-icons';
-import socket from '../../Helper/Socket';
+import socket from '../../Helper/SocketHelper';
 
 
 
