@@ -10,8 +10,7 @@ import { RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads'
 import { updateHighScoreIfNeeded, updateTotalScoreForTime } from '../../Helper/StorageHelper';
 import { scaledSize } from '../../Helper/ScalingHelper';
 import { adUnitIdRewarded } from '../../Helper/AdHelper';
-import { getPerformanceLevel, accuracyCutoffs, wordsFoundCutoffs, averageWordLengthCutoffs } from '../../Helper/PerformanceHelper';
-
+import { getPerformanceLevel, accuracyCutoffs, wordsFoundCutoffs, averageWordLengthCutoffs, colorCutoffs } from '../../Helper/PerformanceHelper';
 import Swiper from 'react-native-swiper';
 
 const rewardedAdv = RewardedAd.createForAdRequest(adUnitIdRewarded, {
@@ -125,9 +124,16 @@ export default function PostGame({ route, navigation }) {
     const timeLimit = selectedTime.toString();
     const currentWordsFoundCutoffs = wordsFoundCutoffs[timeLimit];
 
-    const accuracyLevel = getPerformanceLevel(accuracy, accuracyCutoffs);
-    const wordsFoundLevel = getPerformanceLevel(wordsFoundRatio, currentWordsFoundCutoffs);
-    const averageWordLengthLevel = getPerformanceLevel(averageWordLength, averageWordLengthCutoffs);
+    const accuracyObj = getPerformanceLevel(accuracy, accuracyCutoffs);
+    const wordsFoundObj = getPerformanceLevel(wordsFoundRatio, currentWordsFoundCutoffs);
+    const averageWordLengthObj = getPerformanceLevel(averageWordLength, averageWordLengthCutoffs);
+    const accuracyLevel = accuracyObj.level;
+    const wordsFoundLevel = wordsFoundObj.level;
+    const averageWordLengthLevel = averageWordLengthObj.level;
+    const accuracyColor = accuracyObj.color;
+    const wordsFoundColor = wordsFoundObj.color;
+    const averageWordLengthColor = averageWordLength.color;
+
 
     const toggleDisplay = () => {
         Animated.sequence([
@@ -187,7 +193,7 @@ export default function PostGame({ route, navigation }) {
                                             size={scaledSize(175)}
                                             width={scaledSize(15)}
                                             fill={fillAnimation}
-                                            tintColor='#4BB543'
+                                            tintColor={accuracyColor}
                                             backgroundColor="#3d5875"
                                             rotation={0}
                                         >
@@ -221,7 +227,7 @@ export default function PostGame({ route, navigation }) {
                                             size={scaledSize(175)}
                                             width={scaledSize(15)}
                                             fill={wordsFillAnimation}
-                                            tintColor='#FFA500'
+                                            tintColor={wordsFoundColor}
                                             backgroundColor="#3d5875"
                                             rotation={0}
                                         >

@@ -1,17 +1,30 @@
 export const getPerformanceLevel = (metric, cutoffs) => {
-    let level = 'Novice';
     if (metric >= cutoffs.expert) {
         level = 'Expert';
+        color = colorCutoffs.expert;
     } else if (metric >= cutoffs.advanced) {
         level = 'Advanced';
+        color = colorCutoffs.advanced; 
     } else if (metric >= cutoffs.intermediate) {
         level = 'Intermediate';
+        color = colorCutoffs.intermediate; 
     } else if (metric >= cutoffs.beginner) {
         level = 'Beginner';
+        color = colorCutoffs.beginner; 
     } else {
         level = 'Novice';
+        color = colorCutoffs.novice; 
     }
-    return level;
+    return {level, color};
+};
+
+
+export const colorCutoffs = {
+    novice: '#d60000',
+    beginner: '#d4b401',
+    intermediate: '#c4d600',
+    advanced: '#67bf16',
+    expert: '#2acf06',
 };
 
 export const accuracyCutoffs = {
@@ -35,3 +48,5 @@ export const averageWordLengthCutoffs = {
     advanced: 5,
     expert: 6,
 };
+
+
