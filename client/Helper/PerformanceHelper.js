@@ -28,11 +28,11 @@ export const colorCutoffs = {
 };
 
 export const accuracyCutoffs = {
-    novice: 40,
-    beginner: 60,
-    intermediate: 75,
-    advanced: 90,
-    expert: 91,
+    novice: 45,
+    beginner: 55,
+    intermediate: 65,
+    advanced: 75,
+    expert: 85,
 };
 
 export const wordsFoundCutoffs = {
@@ -42,11 +42,11 @@ export const wordsFoundCutoffs = {
 };
 
 export const averageWordLengthCutoffs = {
-    novice: 3,
-    beginner: 3.5,
-    intermediate: 4,
-    advanced: 5,
-    expert: 6,
+    novice: 2,
+    beginner: 2.5,
+    intermediate: 3,
+    advanced: 3.5,
+    expert: 4,
 };
 
 

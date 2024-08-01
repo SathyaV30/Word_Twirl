@@ -12,7 +12,7 @@ const gameRequests = {}; // Store game requests with room as key and requester's
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5001;
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
@@ -140,6 +140,6 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3001, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:3001`);
+server.listen(5001, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:5001`);
 });

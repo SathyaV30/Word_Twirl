@@ -12,12 +12,13 @@ import { scaledSize } from '../../Helper/ScalingHelper';
 import { adUnitIdRewarded } from '../../Helper/AdHelper';
 import { getPerformanceLevel, accuracyCutoffs, wordsFoundCutoffs, averageWordLengthCutoffs, colorCutoffs } from '../../Helper/PerformanceHelper';
 import Swiper from 'react-native-swiper';
-
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 const rewardedAdv = RewardedAd.createForAdRequest(adUnitIdRewarded, {
     requestNonPersonalizedAdsOnly: true
 });
 
 export default function PostGame({ route, navigation }) {
+    
     const { isSoundMuted } = useContext(SoundContext);
     const { allWords, foundWords, userScore, selectedTime, letters, wordsToPath, attempts, posAttempts, averageWordLength } = route.params;
     const { gradientColors } = useContext(GradientContext);
@@ -132,7 +133,7 @@ export default function PostGame({ route, navigation }) {
     const averageWordLengthLevel = averageWordLengthObj.level;
     const accuracyColor = accuracyObj.color;
     const wordsFoundColor = wordsFoundObj.color;
-    const averageWordLengthColor = averageWordLength.color;
+    const averageWordLengthColor = averageWordLengthObj.color;
 
 
     const toggleDisplay = () => {
@@ -184,6 +185,28 @@ export default function PostGame({ route, navigation }) {
                         dotStyle={styles.dot}
                         activeDotStyle={styles.activeDot}
                     >
+                                                <View style={styles.slide}>
+                            <View style={styles.scrollViewsContainer}>
+                                <ScrollView style={[styles.halfWidthScrollView, styles.fixedHeightScrollView]}>
+                                    <Text style={styles.allWords}>All Words</Text>
+                                    {sortedWords.map((word, index) => (
+                                        <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
+                                           <Text style={[styles.word, { textDecorationLine:foundWords.includes(word.toUpperCase()) ?  'line-through' :'none', textDecorationColor:'#FFF' }]}>{word}</Text>
+                                            <Text style={styles.points}>{getPointValue(word)} pts</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                                <ScrollView style={[styles.halfWidthScrollView, styles.fixedHeightScrollView]}>
+                                    <Text style={styles.allWords}>Found Words</Text>
+                                    {sortedFoundWords.map((word, index) => (
+                                        <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
+                                            <Text style={styles.word}>{word.toLowerCase()}</Text>
+                                            <Text style={styles.points}>{getPointValue(word)} pts</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </View>
                         <View style={styles.slide}>
                             <View style={styles.wheelsRow}>
                                 <View style={styles.wheelContainer}>
@@ -290,34 +313,22 @@ export default function PostGame({ route, navigation }) {
                                 </View>
                             </View>
                         </View>
-                        <View style={styles.slide}>
-                            <View style={styles.scrollViewsContainer}>
-                                <ScrollView style={[styles.halfWidthScrollView, styles.fixedHeightScrollView]}>
-                                    <Text style={styles.allWords}>All Words</Text>
-                                    {sortedWords.map((word, index) => (
-                                        <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
-                                           <Text style={[styles.word, { textDecorationLine:foundWords.includes(word.toUpperCase()) ?  'line-through' :'none', textDecorationColor:'#FFF' }]}>{word}</Text>
-                                            <Text style={styles.points}>{getPointValue(word)} pts</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                                <ScrollView style={[styles.halfWidthScrollView, styles.fixedHeightScrollView]}>
-                                    <Text style={styles.allWords}>Found Words</Text>
-                                    {sortedFoundWords.map((word, index) => (
-                                        <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
-                                            <Text style={styles.word}>{word.toLowerCase()}</Text>
-                                            <Text style={styles.points}>{getPointValue(word)} pts</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            </View>
-                        </View>
+
                         <View style={styles.slide}>
                             <View style={styles.performanceContainer}>
-                                <Text style={styles.performanceLabel}>Performance Level</Text>
-                                <Text style={styles.performanceMetric}>Accuracy: {accuracyLevel}</Text>
-                                <Text style={styles.performanceMetric}>Words Found: {wordsFoundLevel}</Text>
-                                <Text style={styles.performanceMetric}>Avg Word Length: {averageWordLengthLevel}</Text>
+                        <Text style={styles.performanceLabel}>Performance Level</Text>
+                        <View style={styles.performanceContainer}>
+                        <Text style={styles.performanceMetric}>
+                            Accuracy: <Text style={{ color: accuracyColor }}>{accuracyLevel}</Text>
+                        </Text>
+                        <Text style={styles.performanceMetric}>
+                            Words Found: <Text style={{ color: wordsFoundColor }}>{wordsFoundLevel}</Text>
+                        </Text>
+                        <Text style={styles.performanceMetric}>
+                            Avg Word Length: <Text style={{ color: averageWordLengthColor }}>{averageWordLengthLevel}</Text>
+                        </Text>
+                        </View>
+
                             </View>
                         </View>
                     </Swiper>
@@ -353,212 +364,214 @@ export default function PostGame({ route, navigation }) {
             </SafeAreaView>
         </LinearGradient>
     );
+    
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-    },
-    mainContainer: {
-        flex: 1,
-        alignItems: 'center',
-        padding: scaledSize(20),
-    },
-    score: {
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-        fontSize: scaledSize(36),
-        marginBottom: scaledSize(20),
-    },
-    wrapper: {
-        height: scaledSize(500),
-    },
-    slide: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    wheelsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%',
-    },
-    wheelContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    wheelLabel: {
-        fontSize: scaledSize(32),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-        marginBottom: scaledSize(10),
-    },
-    centerText: {
-        fontSize: scaledSize(32),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    wordLengthContainer: {
-        alignItems: 'center',
-        marginTop: scaledSize(20),
-    },
-    wordLengthLabel: {
-        fontSize: scaledSize(24),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    wordLength: {
-        fontSize: scaledSize(48),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    speedometer: {
-        width: 200,
-        height: 100,
-        position: 'relative',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    gradient: {
-        width: '100%',
-        height: 20,
-        borderRadius: 10,
-    },
-    needleContainer: {
-        position: 'absolute',
-        top: 0,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-    },
-    needle: {
-        width: 2,
-        height: 40,
-        backgroundColor: 'black',
-        position: 'absolute',
-        top: '10%',
-    },
-    speedometerLabels: {
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    speedometerLabel: {
-        fontSize: scaledSize(14),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    scrollViewsContainer: {
-        flexDirection: 'row',
-        width: '100%',
-    },
-    halfWidthScrollView: {
-        width: '48%',
-        margin: '1%',
-    },
-    fixedHeightScrollView: {
-        height: scaledSize(450),
-    },
-    allWords: {
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-        fontSize: scaledSize(24),
-        textAlign: 'center',
-        marginBottom: scaledSize(10),
-    },
-    wordContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: scaledSize(1),
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
-        paddingVertical: scaledSize(10),
-    },
-    word: {
-        fontSize: scaledSize(18),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    points: {
-        fontSize: scaledSize(16),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    dot: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        width: scaledSize(8),
-        height: scaledSize(8),
-        borderRadius: scaledSize(4),
-        marginLeft: scaledSize(3),
-        marginRight: scaledSize(3),
-        marginTop: scaledSize(3),
-        marginBottom: scaledSize(3),
-    },
-    activeDot: {
-        backgroundColor: '#fff',
-        width: scaledSize(8),
-        height: scaledSize(8),
-        borderRadius: scaledSize(4),
-        marginLeft: scaledSize(3),
-        marginRight: scaledSize(3),
-        marginTop: scaledSize(3),
-        marginBottom: scaledSize(3),
-    },
-    buttonContainer: {
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: scaledSize(20),
-    },
-    button: {
-        marginVertical: scaledSize(8),
-    },
-    glassButton: {
-        width: scaledSize(350),
-        height: scaledSize(60),
-        padding: scaledSize(12),
-        borderRadius: scaledSize(5),
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    buttonText: {
-        fontFamily: 'ComicSerifPro',
-        color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: scaledSize(20),
-    },
-    buttonTextSmall: {
-        fontFamily: 'ComicSerifPro',
-        color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: scaledSize(16),
-        textAlign: 'center',
-    },
-    performanceContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    performanceLabel: {
-        fontSize: scaledSize(32),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-        marginBottom: scaledSize(20),
-    },
-    performanceMetric: {
-        fontSize: scaledSize(24),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-    },
-    performanceLevel: {
-        fontSize: scaledSize(48),
-        color: '#fff',
-        fontFamily: 'ComicSerifPro',
-        fontWeight: 'bold',
-    },
-});
 
+            const styles = StyleSheet.create({
+            container: {
+            flex: 1,
+            },
+            safeArea: {
+            flex: 1,
+            },
+            mainContainer: {
+            flex: 1,
+            alignItems: 'center',
+            padding: scaledSize(20),
+            },
+            score: {
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            fontSize: scaledSize(36),
+            marginBottom: scaledSize(20),
+            },
+            wrapper: {
+            height: scaledSize(500),
+            },
+            slide: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            },
+            wheelsRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            width: '100%',
+            },
+            wheelContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            },
+            wheelLabel: {
+            fontSize: scaledSize(32),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            marginBottom: scaledSize(10),
+            },
+            centerText: {
+            fontSize: scaledSize(32),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            wordLengthContainer: {
+            alignItems: 'center',
+            marginTop: scaledSize(20),
+            },
+            wordLengthLabel: {
+            fontSize: scaledSize(24),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            wordLength: {
+            fontSize: scaledSize(48),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            speedometer: {
+            width: 200,
+            height: 100,
+            position: 'relative',
+            alignItems: 'center',
+            justifyContent: 'center',
+            },
+            gradient: {
+            width: '100%',
+            height: 20,
+            borderRadius: 10,
+            },
+            needleContainer: {
+            position: 'absolute',
+            top: 0,
+            width: '100%',
+            height: '100%',
+            alignItems: 'center',
+            },
+            needle: {
+            width: 2,
+            height: 40,
+            backgroundColor: 'black',
+            position: 'absolute',
+            top: '10%',
+            },
+            speedometerLabels: {
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            },
+            speedometerLabel: {
+            fontSize: scaledSize(14),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            scrollViewsContainer: {
+            flexDirection: 'row',
+            width: '100%',
+            },
+            halfWidthScrollView: {
+            width: '48%',
+            margin: '1%',
+            },
+            fixedHeightScrollView: {
+            height: scaledSize(450),
+            },
+            allWords: {
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            fontSize: scaledSize(24),
+            textAlign: 'center',
+            marginBottom: scaledSize(10),
+            },
+            wordContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottomWidth: scaledSize(1),
+            borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+            paddingVertical: scaledSize(10),
+            },
+            word: {
+            fontSize: scaledSize(18),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            points: {
+            fontSize: scaledSize(16),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            },
+            dot: {
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+            width: scaledSize(8),
+            height: scaledSize(8),
+            borderRadius: scaledSize(4),
+            marginLeft: scaledSize(3),
+            marginRight: scaledSize(3),
+            marginTop: scaledSize(3),
+            marginBottom: scaledSize(3),
+            },
+            activeDot: {
+            backgroundColor: '#fff',
+            width: scaledSize(8),
+            height: scaledSize(8),
+            borderRadius: scaledSize(4),
+            marginLeft: scaledSize(3),
+            marginRight: scaledSize(3),
+            marginTop: scaledSize(3),
+            marginBottom: scaledSize(3),
+            },
+            buttonContainer: {
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: scaledSize(20),
+            },
+            button: {
+            marginVertical: scaledSize(8),
+            },
+            glassButton: {
+            width: scaledSize(350),
+            height: scaledSize(60),
+            padding: scaledSize(12),
+            borderRadius: scaledSize(5),
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            },
+            buttonText: {
+            fontFamily: 'ComicSerifPro',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: scaledSize(20),
+            },
+            buttonTextSmall: {
+            fontFamily: 'ComicSerifPro',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: scaledSize(16),
+            textAlign: 'center',
+            },
+            performanceContainer: {
+            flex: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            },
+            performanceLabel: {
+            fontSize: scaledSize(32),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            marginBottom: scaledSize(20),
+            },
+            performanceMetric: {
+            fontSize: scaledSize(24),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            marginBottom: scaledSize(10),
+            },
+            performanceLevel: {
+            fontSize: scaledSize(48),
+            color: '#fff',
+            fontFamily: 'ComicSerifPro',
+            fontWeight: 'bold',
+            },
+            });
