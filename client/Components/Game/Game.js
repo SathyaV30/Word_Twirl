@@ -111,9 +111,6 @@ export default function Game({ route, navigation }) {
   const cellSizeTemp = letters.length === 4 || letters.length === 5 ? (0.75 * windowHeight) / 10 : (0.6 * windowHeight) / 10;
   const cellSize = scaledSize(cellSizeTemp) >= 50 ? scaledSize(cellSizeTemp) : 50;
 
-  useEffect(()=> {
-    console.log(allWords);
-  }, [allWords]);
 
   function leaveRoom(room) {
     console.log('Leaving room:', room);

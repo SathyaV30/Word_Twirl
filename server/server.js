@@ -8,7 +8,7 @@ const io = socketIo(server);
 
 const users = {};
 const gameData = {};
-const gameRequests = {}; // Store game requests with room as key and requester's socket ID as value
+const gameRequests = {}; 
 
 app.use(express.json());
 
@@ -44,6 +44,7 @@ io.on('connection', (socket) => {
   socket.on('gameRequest', ({ opponentId, room, requester, map, time }) => {
     console.log(`Game request from ${requester} to ${opponentId} for room ${room}`);
     const opponentSocketId = users[opponentId]?.socketId;
+
     if (opponentSocketId) {
       gameRequests[room] = socket.id; // Store the requester's socket ID
       io.to(opponentSocketId).emit('gameRequest', { room, requester, map, time });

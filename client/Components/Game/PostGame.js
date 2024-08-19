@@ -206,7 +206,7 @@ export default function PostGame({ route, navigation }) {
                                     <Text style={styles.allWords}>All Words</Text>
                                     {sortedWords.map((word, index) => (
                                         <TouchableOpacity style={styles.wordContainer} key={index} onPress={() => navigation.navigate('WordDetailsScreen', { word, letters, wordsToPath, fromGame:true })}>
-                                           <Text style={[styles.word, { textDecorationLine:foundWords.includes(word.toUpperCase()) ?  'line-through' :'none', textDecorationColor:'#FFF' }]}>{word}</Text>
+                                           <Text style={[styles.word, { textDecorationLine:foundWords.includes(word.toUpperCase()) ?  'line-through' :'none', textDecorationColor:'#FF0000' }]}>{word}</Text>
                                             <Text style={styles.points}>{getPointValue(word)} pts</Text>
                                         </TouchableOpacity>
                                     ))}
@@ -230,7 +230,7 @@ export default function PostGame({ route, navigation }) {
                                         <AnimatedCircularProgress
                                             size={scaledSize(125)}
                                             width={scaledSize(12)}
-                                            fill={fillAnimation}
+                                            fill={Number.parseInt(JSON.stringify(fillAnimation))}
                                             tintColor={accuracyColor}
                                             backgroundColor="#3d5875"
                                             rotation={0}
@@ -264,7 +264,7 @@ export default function PostGame({ route, navigation }) {
                                         <AnimatedCircularProgress
                                             size={scaledSize(125)}
                                             width={scaledSize(12)}
-                                            fill={wordsFillAnimation}
+                                            fill={Number.parseInt(JSON.stringify(wordsFillAnimation))}
                                             tintColor={wordsFoundColor}
                                             backgroundColor="#3d5875"
                                             rotation={0}
