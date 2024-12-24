@@ -20,6 +20,7 @@ import { adUnitIdBanner } from "../../Helper/AdHelper";
 import HapticContext from "../../Context/HapticContext";
 const { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
+import ReusableBannerAd from "../Misc/ReusableBannerAd";
 
 //Main menu screen
 export default function Main({ navigation }) {
@@ -43,10 +44,10 @@ export default function Main({ navigation }) {
     <View style={styles.iconWrapper}>
       <FontAwesome name="gamepad" size={scaledSize(38)} color="#fff" />
     </View>
-    <Text style={styles.buttonText}>Classic</Text>
+    <Text style={styles.buttonText}>Start</Text>
   </BlurView>
 </TouchableOpacity>
-    <TouchableOpacity
+    {/* <TouchableOpacity
       style={styles.button}
       onPress={() => { navigation.navigate("Start Screen", { multiplayer: true }); playButtonSound(isSoundMuted) }}
     >
@@ -56,7 +57,15 @@ export default function Main({ navigation }) {
         </View>
         <Text style={styles.buttonText}>Multiplayer</Text>
       </BlurView>
-    </TouchableOpacity>
+    </TouchableOpacity> 
+
+
+    Coming soon!!!
+    
+    
+    */
+    
+    }
 
 
           <TouchableOpacity
@@ -139,11 +148,12 @@ export default function Main({ navigation }) {
 
 
         </View>
+                 
    
       </View>
 
 
-
+      <ReusableBannerAd />
 
       <Rules modalVisible={modalVisible} setModalVisible={setModalVisible} />
     </LinearGradient>
@@ -243,7 +253,12 @@ export const styles = StyleSheet.create({
   iconWrapper: {
     marginRight:scaledSize(10),
     marginBottom:scaledSize(5),
-  }
+  },
+  adContainer: {
+    position: "absolute",
+    bottom: scaledSize(16),
+    alignSelf: "center",
+  },
 });
 
 

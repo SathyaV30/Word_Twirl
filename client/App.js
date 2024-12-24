@@ -28,6 +28,7 @@ import VerifyEmail from './Components/Auth/VerifyEmail';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FriendsLists from './Components/Auth/FriendsLists';
 import PostGameMultiplayer from './Components/Game/PostGameMultiplayer';
+import socket from './Helper/SocketHelper';
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 
@@ -285,11 +286,7 @@ export default function App() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
 
-  // useEffect(()=> {
-  //   clearAsyncStorage();
-  // }, []);
 
-  
 
 
   const checkLoginStatus = async () => {

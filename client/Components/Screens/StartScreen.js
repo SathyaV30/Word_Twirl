@@ -14,8 +14,11 @@ import { getDocs, collection } from 'firebase/firestore';
 import { FIRESTORE } from "../../Firebase/FirebaseConfig";
 import { FontAwesome } from '@expo/vector-icons';
 import socket from '../../Helper/SocketHelper';
-
-
+import { backendUrl } from '../../Helper/SocketHelper';
+import axios from 'axios';
+import { BannerAd, BannerAdSize, TestIds, InterstitialAd, AdEventType, RewardedInterstitialAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
+import { adUnitIdBanner } from "../../Helper/AdHelper";
+import ReusableBannerAd from '../Misc/ReusableBannerAd';
 
 
 export default function StartScreen({ navigation, route }) {
@@ -138,10 +141,11 @@ export default function StartScreen({ navigation, route }) {
     fetchFriends();
   }, [userId]);
 
+
   // Register user with the server
   useEffect(() => {
     if (multiplayer) {
-    socket.emit('registerUser', { userId, username });
+        socket.emit('registerUser', { userId, username });
     }
   }, [userId, username]);
 
@@ -446,6 +450,7 @@ useEffect(() => {
           </View>
         </View>
         <View>
+
           {multiplayer && 
             <View>
               <Text style={styles.header}>Select an opponent:</Text> 
@@ -467,9 +472,12 @@ useEffect(() => {
               <Text style={styles.buttonText}>Start Game</Text>
             </BlurView>
           </TouchableOpacity>
+          
         </View>
+
       </SafeAreaView>
       {renderFriendsModal()}
+    <ReusableBannerAd />
     </LinearGradient>
   );
 }

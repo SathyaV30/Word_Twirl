@@ -9,7 +9,6 @@ const io = socketIo(server);
 const users = {};
 const gameData = {};
 const gameRequests = {}; 
-
 app.use(express.json());
 
 const PORT = process.env.PORT || 5001;
@@ -42,15 +41,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('gameRequest', ({ opponentId, room, requester, map, time }) => {
+
     console.log(`Game request from ${requester} to ${opponentId} for room ${room}`);
     const opponentSocketId = users[opponentId]?.socketId;
 
     if (opponentSocketId) {
       gameRequests[room] = socket.id; // Store the requester's socket ID
       io.to(opponentSocketId).emit('gameRequest', { room, requester, map, time });
+      
     } else {
       console.log('Opponent not found or not connected');
     }
+   
   });
 
   socket.on('postGameData', ({ room, foundWords }) => {
@@ -140,6 +142,8 @@ io.on('connection', (socket) => {
     console.log('Total clients connected:', io.engine.clientsCount);
   });
 });
+
+
 
 server.listen(5001, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:5001`);

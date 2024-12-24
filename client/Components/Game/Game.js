@@ -65,9 +65,8 @@ import HapticContext from '../../Context/HapticContext';
 import AuthContext from '../../Context/AuthContext';
 import { calcScore } from './GameFunctions';
 import { generateLetters } from './GameFunctions';
-import io from 'socket.io-client';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import socket from '../../Helper/SocketHelper';
+import ReusableBannerAd from '../Misc/ReusableBannerAd';
 const windowHeight = Dimensions.get('window').height;
 
 const interstitial = InterstitialAd.createForAdRequest(adUnitIdInterstitial, {
@@ -110,7 +109,6 @@ export default function Game({ route, navigation }) {
   const MARGIN_BETWEEN_CELLS = scaledSize(7);
   const cellSizeTemp = letters.length === 4 || letters.length === 5 ? (0.75 * windowHeight) / 10 : (0.6 * windowHeight) / 10;
   const cellSize = scaledSize(cellSizeTemp) >= 50 ? scaledSize(cellSizeTemp) : 50;
-
 
   function leaveRoom(room) {
     console.log('Leaving room:', room);
@@ -780,9 +778,9 @@ export default function Game({ route, navigation }) {
           </View>
 
           <View style={styles.optionsButtonContainer}>
-            <TouchableOpacity style={styles.soundButton} onPress={() => { setIsPaused(true); playButtonSound(isSoundMuted); }}>
+            {!isMultiplayer && <TouchableOpacity style={styles.soundButton} onPress={() => { setIsPaused(true); playButtonSound(isSoundMuted); }}>
               <FontAwesome name="pause" size={scaledSize(40)} style={{ textAlign: 'center', color: 'white' }} />
-            </TouchableOpacity>
+            </TouchableOpacity>}
             <View style={{ flexDirection: 'row' }}>
               <TouchableOpacity style={styles.soundButton} onPress={() => {
                 setIsSoundMuted(!isSoundMuted);
@@ -807,16 +805,9 @@ export default function Game({ route, navigation }) {
           {renderMap()}
         </View>
 
-        <View style={{ height: 50, marginTop: scaledSize(50) }}>
-          <BannerAd
-            unitId={adUnitIdBanner}
-            size={BannerAdSize.LARGE_BANNER}
-            requestOptions={{
-              requestNonPersonalizedAdsOnly: true,
-            }}
-          />
-        </View>
+      <ReusableBannerAd />
       </SafeAreaView>
+      
 
       {/* Pause Modal */}
       <Modal
